@@ -36,8 +36,8 @@ export default function Background() {
       ctx.fillStyle = '#1f2a2c'; // pacific midnight
       ctx.fillRect(0, 0, width, height);
 
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = '#4b615c'; // muted surf lines
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#6b8a7f'; // brighter surf lines
 
       lines.forEach((line) => {
         ctx.beginPath();
@@ -73,7 +73,7 @@ export default function Background() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 w-full h-full pointer-events-none -z-10 opacity-40"
+      className="fixed inset-0 w-full h-full pointer-events-none -z-10 opacity-60"
     />
   );
 }

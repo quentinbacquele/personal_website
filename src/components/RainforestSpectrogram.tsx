@@ -1,735 +1,630 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import * as THREE from 'three';
+import { Volume2, VolumeX } from 'lucide-react';
 
-const SURFACE_COUNT = 3;
-const TIME_SLICES = 22;
-const FREQ_BINS = 16;
-const WINDOW_SIZE = 2048;
-const MIN_FREQ = 60;
-const MAX_FREQ = 9000;
-const WINDOW_DURATION_SECONDS = 5;
-const FRAME_INTERVAL_MS = 180;
-const BLEND_DURATION_MS = 600;
-const AXIS_COLOR = 'rgba(214, 234, 225, 0.45)';
-const AXIS_TEXT_COLOR = 'rgba(214, 234, 225, 0.75)';
+const FREQUENCY_BINS = 64;
+const HISTORY_LENGTH = 96;
+const TIME_SPAN = 80;
+const FREQ_SPAN = 80;
+const ROW_BYTE_SIZE = FREQUENCY_BINS * 4;
+const FRUSTUM_SIZE = 160;
+const AXIS_COLOR = 0xf6eddd;
 
-type SurfaceMatrix = number[][];
-type IsoPoint = { x: number; y: number };
-type ContourPath = {
-  path: string;
-  intensity: number;
-};
+// Analyser configuration to ensure consistency between simulated and live modes
+const MIN_DECIBELS = -90;
+const MAX_DECIBELS = -15;
+const SMOOTHING_CONSTANT = 0.85;
 
-type ProjectedSurface = {
-  rimPath: string;
-  ribbons: { d: string; fill: string; stroke: string }[];
-};
-type AudioPayload = {
-  samples: Float32Array;
-  sampleRate: number;
-};
+const vertexShader = `
+  precision mediump float;
 
-function applyHannWindow(length: number, index: number) {
-  if (length <= 1) return 1;
-  return 0.5 * (1 - Math.cos((2 * Math.PI * index) / (length - 1)));
-}
+  varying vec2 vUv;
+  varying float vIntensity;
 
-function computeSpectrumSegment(
-  segment: Float32Array,
-  sampleRate: number
-): number[] {
-  const magnitudes = new Array(FREQ_BINS).fill(0);
-  const nyquist = sampleRate / 2;
-  const maxTargetFreq = Math.min(MAX_FREQ, nyquist);
-  const freqSpan = Math.max(1, maxTargetFreq - MIN_FREQ);
+  uniform float u_amplitude;
+  uniform sampler2D u_spectrogram;
 
-  for (let bin = 0; bin < FREQ_BINS; bin++) {
-    const freq = MIN_FREQ + (freqSpan * bin) / (FREQ_BINS - 1 || 1);
-    const angle = (2 * Math.PI * freq) / sampleRate;
-    const cosDelta = Math.cos(angle);
-    const sinDelta = Math.sin(angle);
+  void main() {
+    vUv = uv;
 
-    let cosValue = 1;
-    let sinValue = 0;
-    let real = 0;
-    let imag = 0;
+    float intensity = texture2D(u_spectrogram, vec2(vUv.x, vUv.y)).r;
+    vIntensity = intensity;
 
-    for (let i = 0; i < segment.length; i++) {
-      const windowedSample = segment[i] * applyHannWindow(segment.length, i);
-      real += windowedSample * cosValue;
-      imag -= windowedSample * sinValue;
+    // Use a higher exponent (1.2) to flatten the noise floor height
+    float height = pow(intensity, 1.2) * u_amplitude;
+    // Lower offset to -12.0 to ensure noise floor sits at/below axis
+    vec3 displacedPosition = vec3(position.x, height - 12.0, position.y);
 
-      const nextCos = cosValue * cosDelta - sinValue * sinDelta;
-      const nextSin = sinValue * cosDelta + cosValue * sinDelta;
-      cosValue = nextCos;
-      sinValue = nextSin;
-    }
-
-    magnitudes[bin] = Math.sqrt(real * real + imag * imag);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(displacedPosition, 1.0);
   }
+`;
 
-  return magnitudes;
-}
+const fragmentShader = `
+  precision mediump float;
 
-async function loadRainforestAudio(): Promise<AudioPayload | null> {
-  if (typeof window === 'undefined') return null;
+  varying vec2 vUv;
+  varying float vIntensity;
 
-  const AudioCtx =
-    window.AudioContext ||
-    (window as unknown as { webkitAudioContext: typeof AudioContext })
-      .webkitAudioContext;
+  // Official Google Turbo Colormap (polynomial approximation)
+  vec3 turbo(float x) {
+    const vec4 kRedVec4 = vec4(0.13572138, 4.61539260, -42.66032258, 132.13108234);
+    const vec4 kGreenVec4 = vec4(0.09140261, 2.19418839, 4.84296658, -14.18503333);
+    const vec4 kBlueVec4 = vec4(0.10667330, 12.64194608, -60.58204836, 110.36276771);
+    const vec2 kRedVec2 = vec2(-152.94239396, 59.28637943);
+    const vec2 kGreenVec2 = vec2(4.27729857, 2.82956604);
+    const vec2 kBlueVec2 = vec2(-89.90310912, 27.34824973);
 
-  if (!AudioCtx) return null;
+    x = clamp(x, 0.0, 1.0);
+    vec4 v4 = vec4( 1.0, x, x * x, x * x * x);
+    vec2 v2 = v4.zw * v4.z;
 
-  const audioContext = new AudioCtx();
-
-  try {
-    const response = await fetch('/audio/rainforest.mp3');
-    if (!response.ok) {
-      throw new Error('Unable to fetch rainforest.mp3');
-    }
-
-    const buffer = await response.arrayBuffer();
-    const audioBuffer = await audioContext.decodeAudioData(buffer);
-    const channelData = audioBuffer.getChannelData(0);
-    const samples = new Float32Array(channelData.length);
-    samples.set(channelData);
-
-    return {
-      samples,
-      sampleRate: audioBuffer.sampleRate,
-    };
-  } finally {
-    audioContext.close();
-  }
-}
-
-function extractSurfacesForWindow(
-  payload: AudioPayload,
-  startSample: number,
-  windowSamples: number
-): SurfaceMatrix[] {
-  const { samples, sampleRate } = payload;
-  const end = Math.min(samples.length, startSample + windowSamples);
-  if (end <= startSample) return [];
-
-  const windowed = samples.subarray(startSample, end);
-  const segmentLength = Math.max(1, Math.floor(windowed.length / SURFACE_COUNT));
-  const surfaces: SurfaceMatrix[] = [];
-  let globalMax = 0;
-
-  for (let surfaceIndex = 0; surfaceIndex < SURFACE_COUNT; surfaceIndex++) {
-    const surface: SurfaceMatrix = [];
-    const offset = surfaceIndex * segmentLength;
-    const sliceEnd = Math.min(offset + segmentLength, windowed.length);
-    const layer = windowed.subarray(offset, sliceEnd);
-    if (!layer.length) continue;
-
-    const sliceLength = Math.max(1, Math.floor(layer.length / TIME_SLICES));
-
-    for (let slice = 0; slice < TIME_SLICES; slice++) {
-      const start = slice * sliceLength;
-      if (start >= layer.length) {
-        surface.push(new Array(FREQ_BINS).fill(0));
-        continue;
-      }
-
-      const available = Math.max(
-        64,
-        Math.min(WINDOW_SIZE, layer.length - start)
-      );
-      const segment = new Float32Array(available);
-      segment.set(layer.subarray(start, start + available));
-
-      const magnitudes = computeSpectrumSegment(segment, sampleRate);
-      surface.push(magnitudes);
-
-      magnitudes.forEach((value) => {
-        if (value > globalMax) globalMax = value;
-      });
-    }
-
-    surfaces.push(surface);
-  }
-
-  const normalizer = globalMax || 1;
-
-  return surfaces.map((surface) =>
-    surface.map((row) =>
-      row.map((value) => Math.pow(value / normalizer, 0.85))
-    )
-  );
-}
-
-function projectIsoPoint(
-  timeNorm: number,
-  freqNorm: number,
-  amplitude: number,
-  layer: number
-): IsoPoint {
-  const layerOffset = layer * 36;
-  const x = 250 + (timeNorm - freqNorm) * 220 + layerOffset * 0.7;
-  const y =
-    230 +
-    (timeNorm + freqNorm) * 70 -
-    Math.pow(Math.max(0, amplitude), 0.88) * 220 -
-    layerOffset * 0.35;
-  return { x, y };
-}
-
-function buildIsoPoint(
-  timeIndex: number,
-  freqIndex: number,
-  amplitude: number,
-  layer: number
-): IsoPoint {
-  const timeNorm = timeIndex / (TIME_SLICES - 1 || 1);
-  const freqNorm = freqIndex / (FREQ_BINS - 1 || 1);
-  return projectIsoPoint(timeNorm, freqNorm, amplitude, layer);
-}
-
-function pointsToSmoothPath(points: IsoPoint[], close = false) {
-  if (points.length < 2) return '';
-
-  const commands = [`M${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`];
-
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[i - 1] ?? points[i];
-    const p1 = points[i];
-    const p2 = points[i + 1];
-    const p3 = points[i + 2] ?? p2;
-
-    const cp1x = p1.x + (p2.x - p0.x) / 6;
-    const cp1y = p1.y + (p2.y - p0.y) / 6;
-    const cp2x = p2.x - (p3.x - p1.x) / 6;
-    const cp2y = p2.y - (p3.y - p1.y) / 6;
-
-    commands.push(
-      `C${cp1x.toFixed(2)} ${cp1y.toFixed(
-        2
-      )}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(
-        2
-      )}`
+    return vec3(
+      dot(v4, kRedVec4)   + dot(v2, kRedVec2),
+      dot(v4, kGreenVec4) + dot(v2, kGreenVec2),
+      dot(v4, kBlueVec4)  + dot(v2, kBlueVec2)
     );
   }
 
-  if (close) {
-    commands.push('Z');
+  void main() {
+    // Apply balanced power curve: 1.35 retains blue floor but brings back some mid-range warmth
+    float intensity = clamp(pow(vIntensity, 1.35), 0.0, 1.0);
+    vec3 color = turbo(intensity);
+    gl_FragColor = vec4(color, 1.0);
   }
-
-  return commands.join(' ');
-}
-
-// Specialized helper for ribbons (open paths without Z or M)
-function pointsToCurveCommands(points: IsoPoint[]) {
-  if (points.length < 2) return '';
-  const commands: string[] = [];
-
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[i - 1] ?? points[i];
-    const p1 = points[i];
-    const p2 = points[i + 1];
-    const p3 = points[i + 2] ?? p2;
-
-    const cp1x = p1.x + (p2.x - p0.x) / 6;
-    const cp1y = p1.y + (p2.y - p0.y) / 6;
-    const cp2x = p2.x - (p3.x - p1.x) / 6;
-    const cp2y = p2.y - (p3.y - p1.y) / 6;
-
-    commands.push(
-      `C${cp1x.toFixed(2)} ${cp1y.toFixed(
-        2
-      )}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(
-        2
-      )}`
-    );
-  }
-  return commands.join(' ');
-}
-
-function buildSurfaceRim(surface: SurfaceMatrix, layer: number): IsoPoint[] {
-  if (!surface.length || !surface[0]?.length) return [];
-
-  const rim: IsoPoint[] = [];
-  const lastTime = surface.length - 1;
-  const lastFreq = surface[0].length - 1;
-
-  for (let freq = 0; freq <= lastFreq; freq++) {
-    rim.push(buildIsoPoint(0, freq, surface[0][freq], layer));
-  }
-
-  for (let time = 1; time <= lastTime; time++) {
-    rim.push(buildIsoPoint(time, lastFreq, surface[time][lastFreq], layer));
-  }
-
-  for (let freq = lastFreq - 1; freq >= 0; freq--) {
-    rim.push(buildIsoPoint(lastTime, freq, surface[lastTime][freq], layer));
-  }
-
-  for (let time = lastTime - 1; time > 0; time--) {
-    rim.push(buildIsoPoint(time, 0, surface[time][0], layer));
-  }
-
-  return rim;
-}
-
-function getSurfaceColor(intensity: number, layer: number) {
-  const t = Math.min(1, Math.max(0, intensity));
-  
-  // Monochromatic Green Gradient: Dark Forest -> Fresh Green
-  // Designed to be subtle and organic, avoiding neon/fluo artifacts.
-  
-  // Hue: 150 (Deep Green) -> 130 (Fresh Green)
-  const hue = 150 - 20 * t;
-  
-  // Saturation: 30% -> 55% (Restrained saturation)
-  const sat = 30 + 25 * t;
-  
-  // Lightness: 12% -> 42% (Dark to "slightly more light")
-  const light = 12 + 30 * t;
-  
-  const alpha = 0.92;
-  return `hsla(${hue}, ${sat}%, ${light}%, ${alpha})`;
-}
-
-function blendSurfaces(
-  from: SurfaceMatrix[],
-  to: SurfaceMatrix[],
-  t: number
-): SurfaceMatrix[] {
-  if (!from.length) return to;
-  const clamped = Math.min(1, Math.max(0, t));
-
-  return to.map((surface, surfaceIndex) => {
-    const fromSurface = from[surfaceIndex];
-    return surface.map((row, rowIndex) => {
-      const fromRow = fromSurface?.[rowIndex];
-      return row.map((value, colIndex) => {
-        const start = fromRow?.[colIndex] ?? 0;
-        return start + (value - start) * clamped;
-      });
-    });
-  });
-}
+`;
 
 export default function RainforestSpectrogram() {
-  const [payload, setPayload] = useState<AudioPayload | null>(null);
-  const [surfaces, setSurfaces] = useState<SurfaceMatrix[]>([]);
-  const [displaySurfaces, setDisplaySurfaces] = useState<SurfaceMatrix[]>([]);
-  const displayRef = useRef<SurfaceMatrix[]>([]);
-  const transitionRef = useRef<{
-    from: SurfaceMatrix[];
-    to: SurfaceMatrix[];
-    start: number;
-  } | null>(null);
-  const rafRef = useRef<number>();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const audioBufferRef = useRef<AudioBuffer | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const dataArrayRef = useRef<Uint8Array | null>(null);
+  const spectrogramTextureRef = useRef<THREE.DataTexture | null>(null);
+  const audioReadyRef = useRef(false);
+  
+  // Store previous frame's data for smoothing in simulation mode
+  const prevFrequencyDataRef = useRef<Float32Array | null>(null);
 
+  const rendererStateRef = useRef<{
+    renderer?: THREE.WebGLRenderer;
+    camera?: THREE.OrthographicCamera;
+    uniforms?: {
+      u_amplitude: { value: number };
+      u_spectrogram: { value: THREE.DataTexture };
+    };
+    axisPoints?: {
+      time: THREE.Vector3;
+      freq: THREE.Vector3;
+      amp: THREE.Vector3;
+    };
+  }>({});
+
+  const animationRef = useRef<number>();
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+
+  const timeLabelRef = useRef<HTMLSpanElement>(null);
+  const freqLabelRef = useRef<HTMLSpanElement>(null);
+  const ampLabelRef = useRef<HTMLSpanElement>(null);
+  const isStartedRef = useRef(false);
+
+  const [isMuted, setIsMuted] = useState(true);
+
+  // Helper to compute DFT for visualization when AudioContext is suspended
+  const computeFrequencyData = useCallback((buffer: AudioBuffer, targetArray: Uint8Array) => {
+    const time = performance.now() / 1000;
+    const duration = buffer.duration;
+    const offset = time % duration;
+    const sampleRate = buffer.sampleRate;
+    const startIndex = Math.floor(offset * sampleRate);
+    const fftSize = 512; // Must match the analyser node setting
+    
+    const channelData = buffer.getChannelData(0); // Use first channel
+    
+    // Initialize smoothed data storage if needed
+    if (!prevFrequencyDataRef.current) {
+      prevFrequencyDataRef.current = new Float32Array(targetArray.length);
+    }
+    const prevData = prevFrequencyDataRef.current;
+    
+    // Safety check
+    if (startIndex + fftSize >= channelData.length) return;
+
+    const binCount = Math.min(FREQUENCY_BINS, targetArray.length);
+    const rangeScaleFactor = 255 / (MAX_DECIBELS - MIN_DECIBELS);
+    
+    for (let k = 0; k < binCount; k++) {
+      let real = 0;
+      let imag = 0;
+      
+      // DFT
+      for (let n = 0; n < fftSize; n++) {
+        const sample = channelData[startIndex + n];
+        // Hann window
+        const window = 0.5 * (1 - Math.cos((2 * Math.PI * n) / (fftSize - 1)));
+        const windowedSample = sample * window;
+        
+        const angle = (2 * Math.PI * k * n) / fftSize;
+        real += windowedSample * Math.cos(angle);
+        imag -= windowedSample * Math.sin(angle);
+      }
+      
+      // Calculate Magnitude
+      const magnitude = Math.sqrt(real * real + imag * imag);
+      
+      // Normalize (Analysers typically scale by 1/N)
+      // We add a small epsilon to avoid log(0)
+      const normalized = magnitude / fftSize + 1e-10;
+      
+      // Convert to dB
+      const db = 20 * Math.log10(normalized);
+      
+      // Map to 0-255 range
+      let byteValue = (db - MIN_DECIBELS) * rangeScaleFactor;
+      byteValue = Math.max(0, Math.min(255, byteValue));
+
+      // Apply Smoothing
+      // value = prev * smoothing + curr * (1 - smoothing)
+      const smoothedValue = prevData[k] * SMOOTHING_CONSTANT + byteValue * (1 - SMOOTHING_CONSTANT);
+      prevData[k] = smoothedValue;
+      
+      targetArray[k] = smoothedValue;
+    }
+  }, []);
+
+  const updateSpectrogram = useCallback(() => {
+    const dataArray = dataArrayRef.current;
+    const texture = spectrogramTextureRef.current;
+
+    if (!dataArray || !texture) {
+      return;
+    }
+
+    // Use the texture's data array directly to ensure updates are visible
+    const spectrogramData = texture.image.data;
+
+    // Always use software analysis (Visual Playback) to ensure perfect consistency
+    // regardless of whether the audio context is running, suspended, or transitioning.
+    // This prevents visual glitches ("cuts") when the user interacts.
+    if (audioBufferRef.current) {
+      computeFrequencyData(audioBufferRef.current, dataArray);
+    }
+
+    spectrogramData.copyWithin(
+      ROW_BYTE_SIZE,
+      0,
+      spectrogramData.length - ROW_BYTE_SIZE
+    );
+
+    const usableBins = Math.min(FREQUENCY_BINS, dataArray.length);
+    for (let i = 0; i < FREQUENCY_BINS; i++) {
+      const magnitude = i < usableBins ? dataArray[i] : 0;
+      const normalized = Math.pow(magnitude / 255, 0.7);
+      const pixelIndex = i * 4;
+      spectrogramData[pixelIndex] = normalized * 255;
+      spectrogramData[pixelIndex + 1] = Math.pow(normalized, 0.9) * 255;
+      spectrogramData[pixelIndex + 2] = 200 + normalized * 55;
+      spectrogramData[pixelIndex + 3] = 255;
+    }
+
+    texture.needsUpdate = true;
+  }, [computeFrequencyData]);
+
+  const updateAxisLabels = useCallback(() => {
+    const camera = rendererStateRef.current.camera;
+    const axisPoints = rendererStateRef.current.axisPoints;
+    const container = containerRef.current;
+
+    if (!camera || !axisPoints || !container) {
+      return;
+    }
+
+    const projectPoint = (point: THREE.Vector3) => {
+      const projected = point.clone().project(camera);
+      return {
+        x: (projected.x * 0.5 + 0.5) * container.clientWidth,
+        y: (-projected.y * 0.5 + 0.5) * container.clientHeight,
+      };
+    };
+
+    const placeLabel = (
+      element: HTMLSpanElement | null,
+      coords: { x: number; y: number },
+      rotation: number = 0
+    ) => {
+      if (!element) return;
+      element.style.transform = `translate(${coords.x}px, ${coords.y}px) translate(-50%, -50%) rotate(${rotation}deg)`;
+      element.style.opacity = '1';
+    };
+
+    placeLabel(freqLabelRef.current, projectPoint(axisPoints.freq), 26);
+    placeLabel(timeLabelRef.current, projectPoint(axisPoints.time), -26);
+    placeLabel(ampLabelRef.current, projectPoint(axisPoints.amp), 0);
+  }, []);
+
+  const startAudioSource = useCallback(() => {
+    const ctx = audioContextRef.current;
+    const buffer = audioBufferRef.current;
+    const analyser = analyserRef.current;
+
+    if (!ctx || !buffer || !analyser || audioSourceRef.current) return;
+
+    try {
+      const bufferSource = ctx.createBufferSource();
+      bufferSource.buffer = buffer;
+      bufferSource.loop = true;
+      bufferSource.connect(analyser);
+
+      // Sync start time with the visual clock to avoid jumps
+      const time = performance.now() / 1000;
+      const duration = buffer.duration;
+      const offset = time % duration;
+
+      bufferSource.start(0, offset);
+      audioSourceRef.current = bufferSource;
+      audioReadyRef.current = true;
+    } catch (error) {
+      console.error('Failed to start audio source', error);
+    }
+  }, []);
+
+  // Initialize Audio Context and stream the rainforest loop through Web Audio directly
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const ctx = new AudioContextClass();
+    audioContextRef.current = ctx;
+
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = SMOOTHING_CONSTANT;
+    analyser.minDecibels = MIN_DECIBELS;
+    analyser.maxDecibels = MAX_DECIBELS;
+    analyserRef.current = analyser;
+
+    const gainNode = ctx.createGain();
+    gainNode.gain.value = 0; // Start muted in the Web Audio graph
+    gainNodeRef.current = gainNode;
+
+    analyser.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    // Initialize data arrays
+    dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
+
+    const controller = new AbortController();
     let cancelled = false;
 
-    loadRainforestAudio()
-      .then((data) => {
-        if (!cancelled && data) {
-          setPayload(data);
+    const loadAudioBuffer = async () => {
+      try {
+        const response = await fetch('/audio/rainforest.mp3', {
+          signal: controller.signal,
+        });
+        const buffer = await response.arrayBuffer();
+        if (cancelled) return;
+        const audioBuffer = await ctx.decodeAudioData(buffer);
+        if (cancelled) return;
+        audioBufferRef.current = audioBuffer;
+
+        if (audioContextRef.current?.state === 'running' && isStartedRef.current && !audioSourceRef.current) {
+          startAudioSource();
         }
-      })
-      .catch((error) => {
+      } catch (error) {
+        if ((error as DOMException).name === 'AbortError') {
+          return;
+        }
         console.error('Failed to load rainforest audio', error);
+      }
+    };
+
+    loadAudioBuffer();
+
+    const userGestureEvents: Array<keyof DocumentEventMap> = [
+      'click',
+      'touchstart',
+      'keydown',
+      'mousedown',
+    ];
+
+    const manageGestureListeners = (
+      action: 'add' | 'remove',
+      handler: (event: Event) => void
+    ) => {
+      userGestureEvents.forEach((eventName) => {
+        if (action === 'add') {
+          document.addEventListener(eventName, handler);
+        } else {
+          document.removeEventListener(eventName, handler);
+        }
       });
+    };
+
+    const resumeContext: EventListener = () => {
+      const ctxInstance = audioContextRef.current;
+      if (!ctxInstance) {
+        return;
+      }
+
+      isStartedRef.current = true;
+
+      const resumePromise =
+        ctxInstance.state === 'suspended'
+          ? ctxInstance.resume()
+          : Promise.resolve();
+
+      resumePromise
+        .then(() => {
+          if (audioContextRef.current?.state === 'running') {
+            startAudioSource();
+            manageGestureListeners('remove', resumeContext);
+          }
+        })
+        .catch((err) => {
+          console.warn('Unable to automatically start audio context:', err);
+        });
+    };
+
+    manageGestureListeners('add', resumeContext);
 
     return () => {
       cancelled = true;
+      controller.abort();
+      manageGestureListeners('remove', resumeContext);
+      if (audioSourceRef.current) {
+        try {
+          audioSourceRef.current.stop();
+        } catch (_) {}
+        audioSourceRef.current.disconnect();
+        audioSourceRef.current = null;
+      }
+      if (gainNodeRef.current) {
+        gainNodeRef.current.disconnect();
+        gainNodeRef.current = null;
+      }
+      if (analyserRef.current) {
+        analyserRef.current.disconnect();
+        analyserRef.current = null;
+      }
+      dataArrayRef.current = null;
+      audioBufferRef.current = null;
+      audioReadyRef.current = false;
+      isStartedRef.current = false;
+      if (ctx.state !== 'closed') {
+        ctx.close().catch(() => {});
+      }
+      audioContextRef.current = null;
     };
-  }, []);
+  }, [startAudioSource]);
 
+  // Toggle Mute
+  const toggleMute = () => {
+    const newMuted = !isMuted;
+    setIsMuted(newMuted);
+
+    if (gainNodeRef.current && audioContextRef.current) {
+       const now = audioContextRef.current.currentTime;
+       gainNodeRef.current.gain.setTargetAtTime(newMuted ? 0 : 1, now, 0.1);
+    }
+
+    if (!newMuted && audioContextRef.current?.state === 'suspended') {
+      audioContextRef.current.resume()
+        .then(() => {
+          startAudioSource();
+        })
+        .catch(() => {});
+    }
+  };
+
+  // Initialize Three.js Scene
   useEffect(() => {
-    if (!payload) return;
-    let offsetSamples = 0;
-    let timeoutId: number;
-    const scheduleBlend = (next: SurfaceMatrix[]) => {
-      const now = performance.now();
-      const baseline = displayRef.current.length ? displayRef.current : next;
-      transitionRef.current = { from: baseline, to: next, start: now };
+    const container = containerRef.current;
+    const canvas = canvasRef.current;
+    if (!container || !canvas || typeof window === 'undefined') {
+      return;
+    }
+    
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      canvas,
+    });
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
+    renderer.setClearColor(0x000000, 0);
 
-      if (!rafRef.current) {
-        const step = () => {
-          const transition = transitionRef.current;
-          if (!transition) {
-            rafRef.current = undefined;
-            return;
-          }
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x020409, 0.002);
 
-          const progress = Math.min(
-            (performance.now() - transition.start) / BLEND_DURATION_MS,
-            1
-          );
-          const blended =
-            progress >= 1
-              ? transition.to
-              : blendSurfaces(transition.from, transition.to, progress);
-          setDisplaySurfaces(blended);
+    const aspect = container.clientWidth / container.clientHeight || 1;
+    const camera = new THREE.OrthographicCamera(
+      (-FRUSTUM_SIZE * aspect) / 2,
+      (FRUSTUM_SIZE * aspect) / 2,
+      FRUSTUM_SIZE / 2,
+      -FRUSTUM_SIZE / 2,
+      0.1,
+      500
+    );
+    camera.position.set(115, 95, 115);
+    camera.lookAt(FREQ_SPAN / 2, 0, TIME_SPAN / 2);
 
-          if (progress >= 1) {
-            displayRef.current = transition.to;
-            transitionRef.current = null;
-            rafRef.current = undefined;
-          } else {
-            rafRef.current = requestAnimationFrame(step);
-          }
-        };
+    const ambient = new THREE.AmbientLight(0xffffff, 0.55);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.85);
+    keyLight.position.set(40, 80, 20);
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.35);
+    rimLight.position.set(-60, 50, -40);
+    scene.add(ambient, keyLight, rimLight);
 
-        rafRef.current = requestAnimationFrame(step);
-      }
+    const planeGeometry = new THREE.PlaneGeometry(
+      FREQ_SPAN,
+      TIME_SPAN,
+      FREQUENCY_BINS - 1,
+      HISTORY_LENGTH - 1
+    );
+    planeGeometry.translate(FREQ_SPAN / 2, TIME_SPAN / 2, 0);
+
+    const initialTexture = new THREE.DataTexture(
+      new Uint8Array(FREQUENCY_BINS * HISTORY_LENGTH * 4),
+      FREQUENCY_BINS,
+      HISTORY_LENGTH,
+      THREE.RGBAFormat
+    );
+    initialTexture.needsUpdate = true;
+    spectrogramTextureRef.current = initialTexture;
+
+    const uniforms = {
+      u_amplitude: { value: 45.0 },
+      u_spectrogram: { value: initialTexture },
     };
 
-    const windowSamples = Math.min(
-      payload.samples.length,
-      Math.floor(payload.sampleRate * WINDOW_DURATION_SECONDS)
-    );
-    if (!windowSamples) return;
+    const planeMaterial = new THREE.ShaderMaterial({
+      uniforms,
+      vertexShader,
+      fragmentShader,
+      transparent: true,
+      side: THREE.DoubleSide,
+    });
 
-    const stepSamples = Math.max(
-      1024,
-      Math.floor((payload.sampleRate * FRAME_INTERVAL_MS) / 1000)
-    );
+    const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+    scene.add(planeMesh);
 
-    const update = () => {
-      const nextSurfaces = extractSurfacesForWindow(
-        payload,
-        offsetSamples,
-        windowSamples
-      );
+    const axisMaterial = new THREE.LineBasicMaterial({
+      color: new THREE.Color(AXIS_COLOR),
+      transparent: true,
+      opacity: 0.8,
+      linewidth: 4,
+    });
 
-      if (nextSurfaces.length) {
-        setSurfaces(nextSurfaces);
-        scheduleBlend(nextSurfaces);
-      }
-
-      offsetSamples += stepSamples;
-      if (offsetSamples + windowSamples >= payload.samples.length) {
-        offsetSamples = 0;
-      }
-
-      timeoutId = window.setTimeout(update, FRAME_INTERVAL_MS);
+    const axisGeometries: THREE.BufferGeometry[] = [];
+    const makeAxis = (from: THREE.Vector3, to: THREE.Vector3) => {
+      const geometry = new THREE.BufferGeometry().setFromPoints([from, to]);
+      axisGeometries.push(geometry);
+      const axis = new THREE.Line(geometry, axisMaterial);
+      scene.add(axis);
     };
 
-    update();
+    const origin = new THREE.Vector3(FREQ_SPAN + 4, -4, -4);
+    const timeEnd = new THREE.Vector3(FREQ_SPAN + 4, -4, TIME_SPAN + 4);
+    const freqEnd = new THREE.Vector3(-4, -4, -4);
+    const ampEnd = new THREE.Vector3(FREQ_SPAN + 4, 34, -4);
+
+    makeAxis(origin, timeEnd);
+    makeAxis(origin, freqEnd);
+    makeAxis(origin, ampEnd);
+
+    const timeLabelPos = new THREE.Vector3(FREQ_SPAN + 16, -4, TIME_SPAN / 2);
+    const freqLabelPos = new THREE.Vector3(FREQ_SPAN / 2, -4, -16);
+    const ampLabelPos = new THREE.Vector3(FREQ_SPAN + 16, 15, -4);
+
+    rendererStateRef.current = {
+      renderer,
+      camera,
+      uniforms,
+      axisPoints: {
+        time: timeLabelPos,
+        freq: freqLabelPos,
+        amp: ampLabelPos,
+      },
+    };
+
+    const resize = () => {
+      const { clientWidth, clientHeight } = container;
+      const aspectRatio = clientWidth / clientHeight || 1;
+      renderer.setSize(clientWidth, clientHeight);
+      camera.left = (-FRUSTUM_SIZE * aspectRatio) / 2;
+      camera.right = (FRUSTUM_SIZE * aspectRatio) / 2;
+      camera.top = FRUSTUM_SIZE / 2;
+      camera.bottom = -FRUSTUM_SIZE / 2;
+      camera.updateProjectionMatrix();
+    };
+
+    resize();
+    updateAxisLabels();
+
+    const resizeObserver = new ResizeObserver(() => {
+      resize();
+      updateAxisLabels();
+    });
+    resizeObserver.observe(container);
+    resizeObserverRef.current = resizeObserver;
+
+    const renderScene = () => {
+      animationRef.current = requestAnimationFrame(renderScene);
+      if (analyserRef.current && dataArrayRef.current) {
+        // If suspended, updateSpectrogram handles simulation
+        // If running, we fetch data here or in updateSpectrogram
+        // Let's centralize it in updateSpectrogram
+        updateSpectrogram();
+      }
+      if (rendererStateRef.current.renderer && rendererStateRef.current.camera) {
+        renderer.render(scene, camera);
+        rendererStateRef.current.renderer = renderer;
+        rendererStateRef.current.camera = camera;
+      } else {
+        renderer.render(scene, camera);
+      }
+      updateAxisLabels();
+    };
+
+    renderScene();
 
     return () => {
-      window.clearTimeout(timeoutId);
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = undefined;
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
       }
+
+      resizeObserver.disconnect();
+
+      planeGeometry.dispose();
+      planeMaterial.dispose();
+      axisMaterial.dispose();
+      axisGeometries.forEach((geometry) => geometry.dispose());
+      renderer.dispose();
+      if (spectrogramTextureRef.current) {
+        spectrogramTextureRef.current.dispose();
+        spectrogramTextureRef.current = null;
+      }
+      rendererStateRef.current = {};
     };
-  }, [payload]);
-
-  useEffect(() => {
-    displayRef.current = displaySurfaces;
-  }, [displaySurfaces]);
-
-  useEffect(() => {
-    if (!displaySurfaces.length && surfaces.length) {
-      setDisplaySurfaces(surfaces);
-      displayRef.current = surfaces;
-    }
-  }, [surfaces, displaySurfaces.length]);
-
-  const projected = useMemo(() => {
-    // 1. Calculate Frame-Global Min/Max to stretch gradient
-    let frameMin = Infinity;
-    let frameMax = -Infinity;
-
-    displaySurfaces.forEach((surface) => {
-      if (!surface.length || !surface[0]?.length) return;
-      for (let f = 0; f < surface[0].length - 1; f++) {
-        for (let t = 0; t < surface.length - 1; t++) {
-           const amp = Math.max(
-            surface[t][f], 
-            surface[t + 1][f], 
-            surface[t + 1][f + 1], 
-            surface[t][f + 1]
-          );
-          if (amp < frameMin) frameMin = amp;
-          if (amp > frameMax) frameMax = amp;
-        }
-      }
-    });
-
-    // Avoid divide by zero
-    if (frameMin === Infinity) { frameMin = 0; frameMax = 1; }
-    const range = frameMax - frameMin || 1;
-
-    return displaySurfaces.map((surface, layer): ProjectedSurface => {
-      if (!surface.length || !surface[0]?.length) {
-        return { rimPath: '', ribbons: [] };
-      }
-
-      const rimPoints = buildSurfaceRim(surface, layer);
-      const rimPath = pointsToSmoothPath(rimPoints, true);
-      const ribbons: { d: string; fill: string; stroke: string }[] = [];
-      const timeLength = surface.length;
-      const freqCount = surface[0].length;
-
-      const getControlPoints = (p0: IsoPoint, p1: IsoPoint, p2: IsoPoint, p3: IsoPoint) => {
-        const cp1x = p1.x + (p2.x - p0.x) / 6;
-        const cp1y = p1.y + (p2.y - p0.y) / 6;
-        const cp2x = p2.x - (p3.x - p1.x) / 6;
-        const cp2y = p2.y - (p3.y - p1.y) / 6;
-        return { cp1: { x: cp1x, y: cp1y }, cp2: { x: cp2x, y: cp2y } };
-      };
-
-      for (let f = 0; f < freqCount - 1; f++) {
-        for (let t = 0; t < timeLength - 1; t++) {
-          const tPrev = Math.max(0, t - 1);
-          const tNext = Math.min(timeLength - 1, t + 1);
-          const tNext2 = Math.min(timeLength - 1, t + 2);
-
-          const p0_top = buildIsoPoint(tPrev, f, surface[tPrev][f], layer);
-          const p1_top = buildIsoPoint(t, f, surface[t][f], layer);
-          const p2_top = buildIsoPoint(tNext, f, surface[tNext][f], layer);
-          const p3_top = buildIsoPoint(tNext2, f, surface[tNext2][f], layer);
-
-          const p0_bot = buildIsoPoint(tPrev, f + 1, surface[tPrev][f + 1], layer);
-          const p1_bot = buildIsoPoint(t, f + 1, surface[t][f + 1], layer);
-          const p2_bot = buildIsoPoint(tNext, f + 1, surface[tNext][f + 1], layer);
-          const p3_bot = buildIsoPoint(tNext2, f + 1, surface[tNext2][f + 1], layer);
-
-          const cp_top = getControlPoints(p0_top, p1_top, p2_top, p3_top);
-          const cp_bot = getControlPoints(p0_bot, p1_bot, p2_bot, p3_bot);
-
-          const d = [
-            `M ${p1_top.x.toFixed(2)} ${p1_top.y.toFixed(2)}`,
-            `C ${cp_top.cp1.x.toFixed(2)} ${cp_top.cp1.y.toFixed(2)}, ${cp_top.cp2.x.toFixed(2)} ${cp_top.cp2.y.toFixed(2)}, ${p2_top.x.toFixed(2)} ${p2_top.y.toFixed(2)}`,
-            `L ${p2_bot.x.toFixed(2)} ${p2_bot.y.toFixed(2)}`,
-            `C ${cp_bot.cp2.x.toFixed(2)} ${cp_bot.cp2.y.toFixed(2)}, ${cp_bot.cp1.x.toFixed(2)} ${cp_bot.cp1.y.toFixed(2)}, ${p1_bot.x.toFixed(2)} ${p1_bot.y.toFixed(2)}`,
-            `Z`
-          ].join(' ');
-
-          const segmentAmp = Math.max(
-            surface[t][f], 
-            surface[t + 1][f], 
-            surface[t + 1][f + 1], 
-            surface[t][f + 1]
-          );
-          
-          // Normalize: 0 = current frame min, 1 = current frame max
-          const normalizedAmp = (segmentAmp - frameMin) / range;
-          const fill = getSurfaceColor(normalizedAmp, layer);
-
-          ribbons.push({ d, fill, stroke: fill });
-        }
-      }
-
-      return { rimPath, ribbons };
-    });
-  }, [displaySurfaces]);
-
-  const axisOrigin = projectIsoPoint(0, 1, 0, 0);
-  const timeAxisEnd = projectIsoPoint(1, 1, 0, 0);
-  const freqAxisEnd = projectIsoPoint(0, 0, 0, 0);
-  const amplitudeAxisEnd = projectIsoPoint(0, 1, 0.9, 0);
-
-  const timeTicks = [0.25, 0.5, 0.75].map((t) => ({
-    start: projectIsoPoint(t, 1, 0, 0),
-    end: projectIsoPoint(t, 1, 0.05, 0),
-  }));
-
-  const freqTicks = [0.25, 0.5, 0.75].map((f) => ({
-    start: projectIsoPoint(0, 1 - f, 0, 0),
-    end: projectIsoPoint(0, 1 - f, 0.05, 0),
-  }));
-
-  const amplitudeTicks = [0.3, 0.6, 0.85].map((a) => ({
-    start: projectIsoPoint(0, 1, a, 0),
-    end: projectIsoPoint(0.03, 0.97, a, 0),
-  }));
-
-  const axisAngles = {
-    time:
-      (Math.atan2(timeAxisEnd.y - axisOrigin.y, timeAxisEnd.x - axisOrigin.x) *
-        180) /
-      Math.PI,
-    freq:
-      (Math.atan2(freqAxisEnd.y - axisOrigin.y, freqAxisEnd.x - axisOrigin.x) *
-        180) /
-      Math.PI,
-    amp:
-      (Math.atan2(
-        amplitudeAxisEnd.y - axisOrigin.y,
-        amplitudeAxisEnd.x - axisOrigin.x
-      ) *
-        180) /
-      Math.PI,
-  };
-
-  const axisDirection = (start: IsoPoint, end: IsoPoint) => {
-    const dx = end.x - start.x;
-    const dy = end.y - start.y;
-    const len = Math.hypot(dx, dy) || 1;
-    return { x: dx / len, y: dy / len };
-  };
-
-  const perp = (dir: { x: number; y: number }) => ({ x: -dir.y, y: dir.x });
-
-  const timeDir = axisDirection(axisOrigin, timeAxisEnd);
-  const timeNormal = perp(timeDir);
-  const ampDir = axisDirection(axisOrigin, amplitudeAxisEnd);
-
-  const timeLabelPos = {
-    x: timeAxisEnd.x + timeDir.x * 16 + timeNormal.x * 6,
-    y: timeAxisEnd.y + timeDir.y * 16 + timeNormal.y * 6,
-  };
-
-  const freqMid = {
-    x: (axisOrigin.x + freqAxisEnd.x) / 2,
-    y: (axisOrigin.y + freqAxisEnd.y) / 2,
-  };
-
-  const freqLabelPos = {
-    x: freqMid.x + ampDir.x * 105,
-    y: freqMid.y + ampDir.y * 105,
-  };
-
-  const amplitudeLabelPos = {
-    x: amplitudeAxisEnd.x,
-    y: amplitudeAxisEnd.y - 16,
-  };
+  }, [updateAxisLabels, updateSpectrogram]);
 
   return (
-    <div className="max-w-lg w-full overflow-visible pb-10">
-      <svg
-        viewBox="0 0 520 400"
-        className="w-full h-[400px] overflow-visible"
-        role="img"
-        aria-labelledby="rainforestSpectrogramTitle"
-        preserveAspectRatio="xMidYMid meet"
+    <div className="w-full max-w-3xl relative group">
+      <button
+        onClick={toggleMute}
+        className="absolute top-4 right-4 z-10 p-2 text-sand/50 hover:text-sand transition-colors duration-300 mix-blend-difference"
+        aria-label={isMuted ? "Unmute" : "Mute"}
       >
-        <title id="rainforestSpectrogramTitle">
-          Live five-second rainforest spectrogram mesh
-        </title>
+        {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+      </button>
 
-        <defs>
-          <filter id="rainShadow" x="-30%" y="-40%" width="160%" height="220%">
-            <feDropShadow
-              dx="0"
-              dy="26"
-              stdDeviation="26"
-              floodColor="rgba(0,0,0,0.35)"
-            />
-          </filter>
-
-          {projected.map((_, layer) => {
-            const highlightOpacity = Math.max(0.35, 0.55 - layer * 0.08);
-            const midOpacity = Math.max(0.18, 0.3 - layer * 0.05);
-            const baseOpacity = 0.08 + layer * 0.02;
-
-            return (
-              <g key={layer}>
-                <linearGradient
-                  id={`rainSurface-${layer}`}
-                  x1="0"
-                  y1="140"
-                  x2="0"
-                  y2="440"
-                  gradientUnits="userSpaceOnUse"
-                >
-                  <stop
-                    offset="0%"
-                    stopColor={`rgba(255,255,255,${highlightOpacity})`}
-                  />
-                  <stop
-                    offset="60%"
-                    stopColor={`rgba(173,255,199,${midOpacity})`}
-                  />
-                  <stop
-                    offset="100%"
-                    stopColor={`rgba(4,8,12,${baseOpacity})`}
-                  />
-                </linearGradient>
-                <clipPath id={`rainClip-${layer}`}>
-                  <path d={projected[layer]?.rimPath ?? ''} />
-                </clipPath>
-              </g>
-            );
-          })}
-        </defs>
-
-        <g stroke={AXIS_COLOR} strokeWidth={0.85} fill="none" className="pointer-events-none">
-          <path
-            d={`M${axisOrigin.x} ${axisOrigin.y} L${timeAxisEnd.x} ${timeAxisEnd.y}`}
-          />
-          <path
-            d={`M${axisOrigin.x} ${axisOrigin.y} L${freqAxisEnd.x} ${freqAxisEnd.y}`}
-          />
-          <path
-            d={`M${axisOrigin.x} ${axisOrigin.y} L${amplitudeAxisEnd.x} ${amplitudeAxisEnd.y}`}
-          />
-        </g>
-
-        <g
-          fontFamily="'Space Mono', monospace"
-          fontSize={9.5}
-          fill={AXIS_TEXT_COLOR}
-          className="uppercase tracking-[0.5em] pointer-events-none select-none"
-        >
-          <text
-            x={timeAxisEnd.x - 12}
-            y={timeAxisEnd.y + 10}
-            textAnchor="middle"
-            transform={`rotate(${axisAngles.time} ${timeAxisEnd.x - 12} ${
-              timeAxisEnd.y + 10
-            })`}
+      <div ref={containerRef} className="relative h-[600px] w-full overflow-visible">
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 h-full w-full pointer-events-none"
+        />
+        <div className="pointer-events-none absolute inset-0">
+          <span
+            ref={timeLabelRef}
+            className="absolute font-mono text-[10px] uppercase tracking-[0.5em] text-sand/80 opacity-0 select-none"
           >
             Time
-          </text>
-          <text
-            x={freqLabelPos.x}
-            y={freqLabelPos.y}
-            textAnchor="middle"
-            transform={`rotate(${axisAngles.freq} ${freqLabelPos.x} ${
-              freqLabelPos.y
-            })`}
+          </span>
+          <span
+            ref={freqLabelRef}
+            className="absolute font-mono text-[10px] uppercase tracking-[0.5em] text-sand/80 opacity-0 select-none"
           >
             Frequency
-          </text>
-          <text
-            x={amplitudeLabelPos.x}
-            y={amplitudeLabelPos.y}
-            textAnchor="start"
+          </span>
+          <span
+            ref={ampLabelRef}
+            className="absolute font-mono text-[10px] uppercase tracking-[0.5em] text-sand/80 opacity-0 select-none"
           >
             Amplitude
-          </text>
-        </g>
-
-        {projected.map((surface, layer) => {
-          if (!surface.rimPath) return null;
-
-          const gradientId = `rainSurface-${layer}`;
-
-          return (
-            <g key={layer}>
-              <path
-                d={surface.rimPath}
-                fill={`url(#${gradientId})`}
-                stroke="none"
-                filter="url(#rainShadow)"
-                opacity={0.6}
-              />
-
-              {surface.ribbons.map((ribbon, index) => (
-                <path
-                  key={`r-${layer}-${index}`}
-                  d={ribbon.d}
-                  fill={ribbon.fill}
-                  stroke={ribbon.stroke}
-                  strokeWidth={0.5}
-                  shapeRendering="geometricPrecision"
-                />
-              ))}
-            </g>
-          );
-        })}
-      </svg>
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
