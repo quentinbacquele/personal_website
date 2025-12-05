@@ -1,54 +1,64 @@
 import { motion } from 'framer-motion';
 import { ArrowDown } from 'lucide-react';
+import RainforestSpectrogram from './RainforestSpectrogram';
 
 export default function Hero() {
   return (
     <section className="min-h-screen flex flex-col justify-center px-6 md:px-12 relative pt-20">
-      <div className="max-w-7xl mx-auto w-full">
-        
+      <div className="max-w-7xl mx-auto w-full flex flex-col lg:flex-row items-center lg:items-start gap-12">
+        <div className="flex-1 w-full">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1 }}
+            className="font-mono text-surf text-sm md:text-base mb-6 tracking-[0.2em] uppercase"
+          >
+            PhD Candidate • Bioacoustics • AI
+          </motion.div>
+
+          <div className="overflow-hidden">
+            <motion.h1
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+              className="font-serif text-6xl md:text-8xl lg:text-9xl text-sand leading-[0.9] mb-2"
+            >
+              Quentin
+            </motion.h1>
+          </div>
+          
+          <div className="overflow-hidden mb-8 md:mb-12">
+            <motion.h1
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+              className="font-serif text-6xl md:text-8xl lg:text-9xl text-sand italic leading-[0.9]"
+            >
+              Bacquelé
+            </motion.h1>
+          </div>
+
+          <div className="max-w-2xl">
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="font-sans text-lg md:text-xl text-sage/80 leading-relaxed"
+            >
+              Decoding the language of nature through computational intelligence. 
+              Bridging the gap between <span className="text-acid">biogeography</span> and <span className="text-acid">machine learning</span> to understand ecological patterns.
+            </motion.p>
+          </div>
+        </div>
+
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-          className="font-mono text-surf text-sm md:text-base mb-6 tracking-[0.2em] uppercase"
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 1.2, delay: 0.4 }}
+          className="flex-1 w-full hidden lg:flex justify-end"
         >
-          PhD Candidate • Bioacoustics • AI
+          <RainforestSpectrogram />
         </motion.div>
-
-        <div className="overflow-hidden">
-          <motion.h1
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            className="font-serif text-6xl md:text-8xl lg:text-9xl text-sand leading-[0.9] mb-2"
-          >
-            Quentin
-          </motion.h1>
-        </div>
-        
-        <div className="overflow-hidden mb-8 md:mb-12">
-          <motion.h1
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="font-serif text-6xl md:text-8xl lg:text-9xl text-sand italic leading-[0.9]"
-          >
-            Bacquelé
-          </motion.h1>
-        </div>
-
-        <div className="max-w-2xl">
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="font-sans text-lg md:text-xl text-sage/80 leading-relaxed"
-          >
-            Decoding the language of nature through computational intelligence. 
-            Bridging the gap between <span className="text-acid">biogeography</span> and <span className="text-acid">machine learning</span> to understand ecological patterns.
-          </motion.p>
-        </div>
-
       </div>
 
       <motion.div
