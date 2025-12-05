@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 const SURFACE_COUNT = 3;
-const TIME_SLICES = 28;
-const FREQ_BINS = 20;
+const TIME_SLICES = 22;
+const FREQ_BINS = 16;
 const WINDOW_SIZE = 2048;
 const MIN_FREQ = 60;
 const MAX_FREQ = 9000;
@@ -21,9 +21,7 @@ type ContourPath = {
 
 type ProjectedSurface = {
   rimPath: string;
-  frontEdgePath: string;
-  timeContours: ContourPath[];
-  freqContours: ContourPath[];
+  ribbons: { d: string; fill: string; stroke: string }[];
 };
 type AudioPayload = {
   samples: Float32Array;
@@ -221,6 +219,33 @@ function pointsToSmoothPath(points: IsoPoint[], close = false) {
   return commands.join(' ');
 }
 
+// Specialized helper for ribbons (open paths without Z or M)
+function pointsToCurveCommands(points: IsoPoint[]) {
+  if (points.length < 2) return '';
+  const commands: string[] = [];
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i - 1] ?? points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2] ?? p2;
+
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+    commands.push(
+      `C${cp1x.toFixed(2)} ${cp1y.toFixed(
+        2
+      )}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(
+        2
+      )}`
+    );
+  }
+  return commands.join(' ');
+}
+
 function buildSurfaceRim(surface: SurfaceMatrix, layer: number): IsoPoint[] {
   if (!surface.length || !surface[0]?.length) return [];
 
@@ -247,22 +272,23 @@ function buildSurfaceRim(surface: SurfaceMatrix, layer: number): IsoPoint[] {
   return rim;
 }
 
-function contourColor(
-  intensity: number,
-  layer: number,
-  type: 'time' | 'freq'
-) {
-  const clamped = Math.min(1, Math.max(0, intensity));
-  const hueStart = type === 'time' ? 150 : 195;
-  const hueEnd = type === 'time' ? 95 : 150;
-  const hue = hueStart + (hueEnd - hueStart) * clamped - layer * 2;
-  const lightness = 32 + clamped * 35 - layer * 3;
-  const saturation = 55 + clamped * 35;
-  const alpha = 0.35 + clamped * 0.45 - layer * 0.04;
-  return `hsla(${hue}, ${saturation}%, ${lightness}%, ${Math.min(
-    0.95,
-    Math.max(0.35, alpha)
-  )})`;
+function getSurfaceColor(intensity: number, layer: number) {
+  const t = Math.min(1, Math.max(0, intensity));
+  
+  // Monochromatic Green Gradient: Dark Forest -> Fresh Green
+  // Designed to be subtle and organic, avoiding neon/fluo artifacts.
+  
+  // Hue: 150 (Deep Green) -> 130 (Fresh Green)
+  const hue = 150 - 20 * t;
+  
+  // Saturation: 30% -> 55% (Restrained saturation)
+  const sat = 30 + 25 * t;
+  
+  // Lightness: 12% -> 42% (Dark to "slightly more light")
+  const light = 12 + 30 * t;
+  
+  const alpha = 0.92;
+  return `hsla(${hue}, ${sat}%, ${light}%, ${alpha})`;
 }
 
 function blendSurfaces(
@@ -409,77 +435,92 @@ export default function RainforestSpectrogram() {
   }, [surfaces, displaySurfaces.length]);
 
   const projected = useMemo(() => {
+    // 1. Calculate Frame-Global Min/Max to stretch gradient
+    let frameMin = Infinity;
+    let frameMax = -Infinity;
+
+    displaySurfaces.forEach((surface) => {
+      if (!surface.length || !surface[0]?.length) return;
+      for (let f = 0; f < surface[0].length - 1; f++) {
+        for (let t = 0; t < surface.length - 1; t++) {
+           const amp = Math.max(
+            surface[t][f], 
+            surface[t + 1][f], 
+            surface[t + 1][f + 1], 
+            surface[t][f + 1]
+          );
+          if (amp < frameMin) frameMin = amp;
+          if (amp > frameMax) frameMax = amp;
+        }
+      }
+    });
+
+    // Avoid divide by zero
+    if (frameMin === Infinity) { frameMin = 0; frameMax = 1; }
+    const range = frameMax - frameMin || 1;
+
     return displaySurfaces.map((surface, layer): ProjectedSurface => {
       if (!surface.length || !surface[0]?.length) {
-        return { rimPath: '', frontEdgePath: '', timeContours: [], freqContours: [] };
+        return { rimPath: '', ribbons: [] };
       }
 
       const rimPoints = buildSurfaceRim(surface, layer);
       const rimPath = pointsToSmoothPath(rimPoints, true);
-
-      const frontEdgePoints = surface.map((row, timeIndex) =>
-        buildIsoPoint(timeIndex, 0, row[0] ?? 0, layer)
-      );
-      const frontEdgePath = pointsToSmoothPath(frontEdgePoints);
-
-      const freqCount = surface[0]?.length ?? 0;
+      const ribbons: { d: string; fill: string; stroke: string }[] = [];
       const timeLength = surface.length;
+      const freqCount = surface[0].length;
 
-      const contourFreqs =
-        freqCount > 1
-          ? [0.25, 0.5, 0.75]
-              .map((ratio) =>
-                Math.min(freqCount - 1, Math.max(0, Math.round(ratio * (freqCount - 1))))
-              )
-              .filter((value, index, arr) => arr.indexOf(value) === index)
-          : [];
+      const getControlPoints = (p0: IsoPoint, p1: IsoPoint, p2: IsoPoint, p3: IsoPoint) => {
+        const cp1x = p1.x + (p2.x - p0.x) / 6;
+        const cp1y = p1.y + (p2.y - p0.y) / 6;
+        const cp2x = p2.x - (p3.x - p1.x) / 6;
+        const cp2y = p2.y - (p3.y - p1.y) / 6;
+        return { cp1: { x: cp1x, y: cp1y }, cp2: { x: cp2x, y: cp2y } };
+      };
 
-      const contourTimes =
-        timeLength > 1
-          ? [0.3, 0.55, 0.8]
-              .map((ratio) =>
-                Math.min(timeLength - 1, Math.max(0, Math.round(ratio * (timeLength - 1))))
-              )
-              .filter((value, index, arr) => arr.indexOf(value) === index)
-          : [];
+      for (let f = 0; f < freqCount - 1; f++) {
+        for (let t = 0; t < timeLength - 1; t++) {
+          const tPrev = Math.max(0, t - 1);
+          const tNext = Math.min(timeLength - 1, t + 1);
+          const tNext2 = Math.min(timeLength - 1, t + 2);
 
-      const timeContours: ContourPath[] = contourFreqs
-        .map((freqIndex) => {
-          let peak = 0;
-          const points = surface.map((row, timeIndex) => {
-            const amp = row[freqIndex] ?? 0;
-            if (amp > peak) peak = amp;
-            return buildIsoPoint(timeIndex, freqIndex, amp, layer);
-          });
-          const path = pointsToSmoothPath(points);
-          if (!path) return null;
-          return {
-            path,
-            intensity: peak,
-          };
-        })
-        .filter((entry): entry is ContourPath => Boolean(entry));
+          const p0_top = buildIsoPoint(tPrev, f, surface[tPrev][f], layer);
+          const p1_top = buildIsoPoint(t, f, surface[t][f], layer);
+          const p2_top = buildIsoPoint(tNext, f, surface[tNext][f], layer);
+          const p3_top = buildIsoPoint(tNext2, f, surface[tNext2][f], layer);
 
-      const freqContours: ContourPath[] = contourTimes
-        .map((timeIndex) => {
-          const row = surface[timeIndex];
-          if (!row) return null;
-          let peak = 0;
-          const points = row.map((value, freqIndex) => {
-            const amp = value ?? 0;
-            if (amp > peak) peak = amp;
-            return buildIsoPoint(timeIndex, freqIndex, amp, layer);
-          });
-          const path = pointsToSmoothPath(points);
-          if (!path) return null;
-          return {
-            path,
-            intensity: peak,
-          };
-        })
-        .filter((entry): entry is ContourPath => Boolean(entry));
+          const p0_bot = buildIsoPoint(tPrev, f + 1, surface[tPrev][f + 1], layer);
+          const p1_bot = buildIsoPoint(t, f + 1, surface[t][f + 1], layer);
+          const p2_bot = buildIsoPoint(tNext, f + 1, surface[tNext][f + 1], layer);
+          const p3_bot = buildIsoPoint(tNext2, f + 1, surface[tNext2][f + 1], layer);
 
-      return { rimPath, frontEdgePath, timeContours, freqContours };
+          const cp_top = getControlPoints(p0_top, p1_top, p2_top, p3_top);
+          const cp_bot = getControlPoints(p0_bot, p1_bot, p2_bot, p3_bot);
+
+          const d = [
+            `M ${p1_top.x.toFixed(2)} ${p1_top.y.toFixed(2)}`,
+            `C ${cp_top.cp1.x.toFixed(2)} ${cp_top.cp1.y.toFixed(2)}, ${cp_top.cp2.x.toFixed(2)} ${cp_top.cp2.y.toFixed(2)}, ${p2_top.x.toFixed(2)} ${p2_top.y.toFixed(2)}`,
+            `L ${p2_bot.x.toFixed(2)} ${p2_bot.y.toFixed(2)}`,
+            `C ${cp_bot.cp2.x.toFixed(2)} ${cp_bot.cp2.y.toFixed(2)}, ${cp_bot.cp1.x.toFixed(2)} ${cp_bot.cp1.y.toFixed(2)}, ${p1_bot.x.toFixed(2)} ${p1_bot.y.toFixed(2)}`,
+            `Z`
+          ].join(' ');
+
+          const segmentAmp = Math.max(
+            surface[t][f], 
+            surface[t + 1][f], 
+            surface[t + 1][f + 1], 
+            surface[t][f + 1]
+          );
+          
+          // Normalize: 0 = current frame min, 1 = current frame max
+          const normalizedAmp = (segmentAmp - frameMin) / range;
+          const fill = getSurfaceColor(normalizedAmp, layer);
+
+          ribbons.push({ d, fill, stroke: fill });
+        }
+      }
+
+      return { rimPath, ribbons };
     });
   }, [displaySurfaces]);
 
@@ -545,8 +586,8 @@ export default function RainforestSpectrogram() {
   };
 
   const freqLabelPos = {
-    x: freqMid.x + ampDir.x * 72,
-    y: freqMid.y + ampDir.y * 72,
+    x: freqMid.x + ampDir.x * 105,
+    y: freqMid.y + ampDir.y * 105,
   };
 
   const amplitudeLabelPos = {
@@ -623,27 +664,6 @@ export default function RainforestSpectrogram() {
           <path
             d={`M${axisOrigin.x} ${axisOrigin.y} L${amplitudeAxisEnd.x} ${amplitudeAxisEnd.y}`}
           />
-
-          <g strokeWidth={0.65}>
-            {timeTicks.map((tick, index) => (
-              <path
-                key={`tt-${index}`}
-                d={`M${tick.start.x} ${tick.start.y} L${tick.end.x} ${tick.end.y}`}
-              />
-            ))}
-            {freqTicks.map((tick, index) => (
-              <path
-                key={`ft-${index}`}
-                d={`M${tick.start.x} ${tick.start.y} L${tick.end.x} ${tick.end.y}`}
-              />
-            ))}
-            {amplitudeTicks.map((tick, index) => (
-              <path
-                key={`at-${index}`}
-                d={`M${tick.start.x} ${tick.start.y} L${tick.end.x} ${tick.end.y}`}
-              />
-            ))}
-          </g>
         </g>
 
         <g
@@ -685,59 +705,27 @@ export default function RainforestSpectrogram() {
           if (!surface.rimPath) return null;
 
           const gradientId = `rainSurface-${layer}`;
-          const outlineOpacity = Math.max(0.15, 0.25 - layer * 0.06);
-          const clipId = `rainClip-${layer}`;
 
           return (
             <g key={layer}>
               <path
                 d={surface.rimPath}
                 fill={`url(#${gradientId})`}
-                stroke={`rgba(255,255,255,${outlineOpacity})`}
-                strokeWidth={0.65}
+                stroke="none"
                 filter="url(#rainShadow)"
-                opacity={0.95 - layer * 0.12}
+                opacity={0.6}
               />
 
-              {surface.frontEdgePath ? (
+              {surface.ribbons.map((ribbon, index) => (
                 <path
-                  d={surface.frontEdgePath}
-                  stroke="rgba(0,0,0,0.4)"
-                  strokeWidth={0.9}
-                  fill="none"
-                  opacity={0.25}
+                  key={`r-${layer}-${index}`}
+                  d={ribbon.d}
+                  fill={ribbon.fill}
+                  stroke={ribbon.stroke}
+                  strokeWidth={0.5}
+                  shapeRendering="geometricPrecision"
                 />
-              ) : null}
-
-              <g clipPath={`url(#${clipId})`} style={{ mixBlendMode: 'screen' }}>
-                {surface.timeContours.map((contour, index) => (
-                  <path
-                    key={`tc-${layer}-${index}`}
-                    d={contour.path}
-                    stroke={contourColor(contour.intensity, layer, 'time')}
-                    strokeWidth={0.5 + contour.intensity * 0.35}
-                    strokeOpacity={Math.min(
-                      0.95,
-                      Math.max(0.4, contour.intensity * 0.9 - layer * 0.04)
-                    )}
-                    fill="none"
-                  />
-                ))}
-
-                {surface.freqContours.map((contour, index) => (
-                  <path
-                    key={`fc-${layer}-${index}`}
-                    d={contour.path}
-                    stroke={contourColor(contour.intensity, layer, 'freq')}
-                    strokeWidth={0.45 + contour.intensity * 0.3}
-                    strokeOpacity={Math.min(
-                      0.9,
-                      Math.max(0.35, contour.intensity * 0.85 - layer * 0.05)
-                    )}
-                    fill="none"
-                  />
-                ))}
-              </g>
+              ))}
             </g>
           );
         })}
