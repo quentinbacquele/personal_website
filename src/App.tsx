@@ -1,7 +1,8 @@
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
-import About from './components/About';
 import Research from './components/Research';
+import Blog from './components/Blog';
+import About from './components/About';
 import Contact from './components/Contact';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
       <main className="relative z-10">
         <Hero />
         <Research />
+        <Blog />
         <About />
         <Contact />
       </main>
