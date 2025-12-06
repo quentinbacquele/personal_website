@@ -5,7 +5,7 @@ import RainforestSpectrogram from './RainforestSpectrogram';
 export default function Hero() {
   return (
     <section className="min-h-screen flex flex-col justify-center px-6 md:px-12 relative pt-20">
-      <div className="max-w-7xl mx-auto w-full flex flex-col lg:flex-row items-center lg:items-start gap-12">
+      <div className="max-w-7xl mx-auto w-full flex flex-col lg:flex-row items-center lg:items-start gap-12 mt-16 md:mt-24">
         <div className="flex-1 w-full">
           <motion.div
             initial={{ opacity: 0 }}
@@ -55,7 +55,7 @@ export default function Hero() {
           initial={{ opacity: 0, x: 40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 1.2, delay: 0.4 }}
-          className="flex-1 w-full flex justify-center lg:justify-end mt-12 lg:mt-0"
+          className="flex-1 w-full flex justify-center lg:justify-end mt-0 lg:-mt-40"
         >
           <RainforestSpectrogram />
         </motion.div>
