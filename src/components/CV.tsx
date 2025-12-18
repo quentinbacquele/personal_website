@@ -131,7 +131,14 @@ export default function CV() {
   
   // Spy on scroll to update active section
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+
     const handleScroll = () => {
+      if (window.scrollY < 150) {
+        setActiveSection('education');
+        return;
+      }
+
       const scrollPosition = window.scrollY + 300; // Offset
       
       for (const section of sections) {
