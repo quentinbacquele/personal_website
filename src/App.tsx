@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Research from './components/Research';
@@ -6,6 +8,21 @@ import About from './components/About';
 import Contact from './components/Contact';
 
 function App() {
+  const { hash } = useLocation();
+
+  useEffect(() => {
+    if (hash) {
+      const element = document.querySelector(hash);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [hash]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-obsidian via-charcoal/80 to-obsidian text-sand selection:bg-acid selection:text-obsidian font-sans">
       {/* Global Grain Overlay */}

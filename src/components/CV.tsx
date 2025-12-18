@@ -1,4 +1,4 @@
-import { motion, useScroll, useSpring, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ArrowLeft, Download, ExternalLink, Calendar, MapPin, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
@@ -121,31 +121,14 @@ const SectionHeading = ({ children, id }: { children: React.ReactNode; id: strin
     className="flex items-end gap-4 mb-12 mt-24 scroll-mt-32"
   >
     <h2 className="font-serif text-4xl md:text-5xl text-sand italic">{children}</h2>
-    <div className="flex-1 h-px bg-gradient-to-r from-acid/50 to-transparent mb-2" />
+    <div className="flex-1 h-px bg-sage/20 mb-2" />
   </motion.div>
 );
-
-const GlowCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => {
-  return (
-    <div className={`relative group ${className}`}>
-      <div className="relative h-full bg-charcoal/40 backdrop-blur-xl border border-sage/10 p-6 md:p-8 rounded-xl hover:border-sage/20 hover:bg-charcoal/60 transition-all duration-300">
-        {children}
-      </div>
-    </div>
-  );
-};
 
 export default function CV() {
   const [activeSection, setActiveSection] = useState('education');
   const sections = ['education', 'research', 'presentations', 'skills'];
   
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001
-  });
-
   // Spy on scroll to update active section
   useEffect(() => {
     const handleScroll = () => {
@@ -179,12 +162,6 @@ export default function CV() {
       {/* Background Noise & Gradient */}
       <div className="fixed inset-0 bg-noise opacity-[0.03] pointer-events-none z-0" />
       <div className="fixed top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-acid/5 to-transparent pointer-events-none z-0" />
-
-      {/* Progress Bar */}
-      <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-acid/50 to-surf/50 origin-left z-50"
-        style={{ scaleX }}
-      />
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-12 lg:gap-24">
         
@@ -239,7 +216,7 @@ export default function CV() {
 
           {/* Education */}
           <SectionHeading id="education">Education</SectionHeading>
-          <div className="space-y-8 relative border-l border-sage/10 ml-3 md:ml-4 pl-8 md:pl-12">
+          <div className="space-y-12 relative ml-2 md:ml-4">
             {education.map((item, index) => (
               <motion.div
                 key={index}
@@ -247,45 +224,38 @@ export default function CV() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-10%" }}
                 transition={{ delay: index * 0.1 }}
-                className="relative"
+                className="relative pl-6 border-l border-sage/10"
               >
                 {/* Timeline Dot */}
-                <div className="absolute -left-[41px] md:-left-[57px] top-6 w-5 h-5 rounded-full bg-obsidian border border-sage/30 flex items-center justify-center z-10">
-                  <div className="w-1.5 h-1.5 rounded-full bg-sage/50" />
-                </div>
+                <div className="absolute -left-[5px] top-2 w-2.5 h-2.5 rounded-full bg-obsidian border border-sage/40" />
 
-                <GlowCard>
-                  <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 mb-2">
-                    <h3 className="font-sans text-xl text-sand font-medium leading-snug">
-                      {item.degree}
-                    </h3>
-                    <span className="font-mono text-xs text-acid bg-acid/10 px-2 py-1 rounded">
-                      {item.period}
-                    </span>
-                  </div>
-                  <div className="flex flex-col md:flex-row gap-x-6 gap-y-1 text-sm text-sage/60 font-mono mb-3">
-                    <span className="flex items-center gap-2">
-                      <Award className="w-3 h-3" />
-                      {item.institution}
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <MapPin className="w-3 h-3" />
-                      {item.location}
-                    </span>
-                  </div>
-                  {item.note && (
-                    <p className="font-sans text-sm text-surf/80 italic border-l-2 border-surf/30 pl-3">
-                      {item.note}
-                    </p>
-                  )}
-                </GlowCard>
+                <div className="flex flex-col md:flex-row md:justify-between md:items-baseline gap-2 mb-2">
+                  <h3 className="font-sans text-xl text-sand font-medium leading-snug">
+                    {item.degree}
+                  </h3>
+                  <span className="font-mono text-xs text-acid">
+                    {item.period}
+                  </span>
+                </div>
+                
+                <div className="flex flex-col md:flex-row gap-x-6 gap-y-1 text-sm text-sage/60 font-mono mb-2">
+                  <span>{item.institution}</span>
+                  <span className="hidden md:inline text-sage/20">•</span>
+                  <span>{item.location}</span>
+                </div>
+                
+                {item.note && (
+                  <p className="font-sans text-sm text-surf/80 italic mt-1">
+                    {item.note}
+                  </p>
+                )}
               </motion.div>
             ))}
           </div>
 
           {/* Research */}
           <SectionHeading id="research">Research</SectionHeading>
-          <div className="space-y-12">
+          <div className="space-y-16">
             {research.map((item, index) => (
               <motion.div
                 key={index}
@@ -293,64 +263,61 @@ export default function CV() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
               >
-                <div className="group relative pl-6 border-l-2 border-sage/10 hover:border-sage/30 transition-colors duration-500">
-                  <div className="mb-4">
-                    <h3 className="font-sans text-2xl text-sand font-medium transition-colors duration-300">
+                <div className="mb-4">
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-baseline gap-2 mb-2">
+                    <h3 className="font-sans text-2xl text-sand font-medium">
                       {item.title}
                     </h3>
-                    <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 font-mono text-xs text-sage/50">
-                      <span className="text-acid">{item.period}</span>
-                      <span>{item.institution}</span>
-                      <span>{item.location}</span>
-                    </div>
-                    <div className="mt-1 font-mono text-xs text-sage/30">
-                      Supervisors: {item.supervisors}
-                    </div>
+                    <span className="font-mono text-xs text-acid shrink-0">{item.period}</span>
                   </div>
-
-                  <ul className="space-y-2 mb-6">
-                    {item.details.map((detail, i) => (
-                      <li key={i} className="flex items-start gap-3 text-sage/70 font-sans leading-relaxed text-base transition-colors">
-                        <span className="mt-2 w-1 h-1 rounded-full bg-surf/50 shrink-0" />
-                        {detail}
-                      </li>
-                    ))}
-                  </ul>
+                  
+                  <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-xs text-sage/50 mb-2">
+                    <span>{item.institution}</span>
+                    <span className="text-sage/20">•</span>
+                    <span>{item.location}</span>
+                  </div>
+                  
+                  <div className="font-mono text-xs text-sage/30">
+                    Supervisors: {item.supervisors}
+                  </div>
                 </div>
+
+                <ul className="space-y-2">
+                  {item.details.map((detail, i) => (
+                    <li key={i} className="flex items-start gap-3 text-sage/70 font-sans leading-relaxed text-base">
+                      <span className="mt-2.5 w-1 h-1 rounded-full bg-sage/40 shrink-0" />
+                      {detail}
+                    </li>
+                  ))}
+                </ul>
               </motion.div>
             ))}
           </div>
 
           {/* Presentations */}
           <SectionHeading id="presentations">Presentations</SectionHeading>
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-x-12 gap-y-12">
             {presentations.map((item, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, scale: 0.98 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="h-full"
               >
-                <GlowCard className="h-full flex flex-col justify-between">
-                  <div>
-                    <Calendar className="w-5 h-5 text-acid mb-4 opacity-80" />
-                    <h3 className="font-sans text-lg text-sand font-medium mb-3 leading-snug">
-                      {item.title}
-                    </h3>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-sage/5 flex justify-between items-end font-mono text-xs">
-                    <span className="text-surf">{item.event}</span>
-                    <span className="text-sage/40">{item.location}</span>
-                  </div>
-                </GlowCard>
+                <h3 className="font-sans text-lg text-sand font-medium mb-2 leading-snug">
+                  {item.title}
+                </h3>
+                <div className="flex justify-between items-baseline font-mono text-xs pt-2 border-t border-sage/10">
+                  <span className="text-surf">{item.event}</span>
+                  <span className="text-sage/40">{item.location}</span>
+                </div>
               </motion.div>
             ))}
           </div>
 
           {/* Skills */}
           <SectionHeading id="skills">Skills</SectionHeading>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12">
             {Object.entries(skills).map(([category, items], catIndex) => (
               <motion.div
                 key={category}
@@ -362,16 +329,16 @@ export default function CV() {
                 <h3 className="font-mono text-xs text-acid uppercase tracking-widest mb-6 pb-2 border-b border-sage/10">
                   {category}
                 </h3>
-                <div className="flex flex-wrap gap-2">
+                <ul className="space-y-2">
                   {items.map((skill, i) => (
-                    <span
+                    <li
                       key={skill}
-                      className="cursor-default font-mono text-xs text-sage/70 bg-charcoal/50 border border-sage/10 px-3 py-1.5 rounded-md hover:border-sage/30 hover:bg-charcoal/70 hover:text-sand/90 transition-all duration-300"
+                      className="font-mono text-sm text-sage/70"
                     >
                       {skill}
-                    </span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </motion.div>
             ))}
           </div>
