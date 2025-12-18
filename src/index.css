@@ -9,6 +9,7 @@
   html {
     @apply bg-gradient-to-b from-obsidian via-charcoal to-obsidian text-sand antialiased selection:bg-acid selection:text-obsidian;
     scroll-behavior: smooth;
+    overscroll-behavior-y: none;
   }
   
   body {
@@ -26,6 +27,16 @@
   
   ::-webkit-scrollbar-thumb {
     @apply bg-subtle rounded-full hover:bg-subtle/80 transition-colors;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 

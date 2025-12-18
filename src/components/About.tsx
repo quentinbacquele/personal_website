@@ -27,24 +27,24 @@ export default function About() {
              <div className="relative z-10">
                 <div className="font-mono text-xs text-acid mb-2">CURRENTLY</div>
                 <div className="font-sans text-sand text-sm">
-                  PhD Candidate at [University Name]<br/>
-                  Based in [Location]
+                  PhD Candidate at EPHE Paris PSL, ENES Bioacoustics Lab & CEFE Montpellier.<br/>
+                  Based in Lyon.
                 </div>
              </div>
           </motion.div>
         </div>
 
         <div className="space-y-8">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="font-serif text-4xl md:text-5xl text-sage"
           >
-            Listening to the Pulse <br/> of the Planet.
+            About
           </motion.h2>
 
-          <motion.div 
+          <motion.div
              initial={{ opacity: 0, y: 20 }}
              whileInView={{ opacity: 1, y: 0 }}
              viewport={{ once: true }}
@@ -52,15 +52,23 @@ export default function About() {
              className="space-y-6 text-sage/80 font-sans leading-relaxed text-lg"
           >
             <p>
-              My work exists at the convergence of ecology and technology. By leveraging advanced machine learning algorithms, I decode the complex acoustic signals of ecosystems to understand biodiversity patterns on a global scale.
+              I'm a PhD candidate in acoustic biogeography. I believe bioacoustics should be scaled to the biogeographic level, uncovering patterns that remain invisible at local scales. The rise of machine learning in bioacoustics, combined with vast amounts of available data and techniques from spatial, phylogenetic, and functional ecology, is opening the door to a new macroecological framework for studying acoustic communication.
             </p>
             <p>
-              I believe that sound is an untapped dimension of biological data—one that can reveal the hidden dynamics of our changing world more immediately than visual observation alone.
-            </p>
-            <p>
-              When I'm not training models or deploying sensors in the field, I'm exploring the philosophy of AI and its role in future conservation efforts.
+              I'm drawn to multidisciplinary science, integrating acoustics, behavior, ecology, and machine learning. I enjoy exploring new methodologies for understanding animal communication, and I believe language modeling may be a promising next step. I also have a passion for creating beautiful, interactive visualizations and figures.
             </p>
           </motion.div>
+
+          <motion.a
+            href="/cv"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+            className="inline-block font-mono text-sm text-acid hover:text-terracotta transition-colors uppercase tracking-wider"
+          >
+            View CV →
+          </motion.a>
         </div>
       </div>
     </section>

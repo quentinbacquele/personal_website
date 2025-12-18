@@ -1,80 +1,125 @@
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
 
-const posts = [
-  {
-    date: 'Nov 2025',
-    title: 'The Sound of the Canopy',
-    excerpt: 'Reflecting on the vertical stratification of acoustic communities in the Amazon rainforest. How height correlates with frequency modulation in avian vocalizations.',
-    readTime: '5 min read',
-    slug: '#'
-  },
-  {
-    date: 'Oct 2025',
-    title: 'Training Transformers on Spectrograms',
-    excerpt: 'A deep dive into the challenges of adapting Vision Transformers (ViT) for bioacoustic classification. Why standard image augmentation fails for audio data.',
-    readTime: '8 min read',
-    slug: '#'
-  },
-  {
-    date: 'Aug 2025',
-    title: 'From the Field: Amazonia Expedition',
-    excerpt: 'Field notes from a month in the Madre de Dios region. deploying autonomous recording units and dodging bullet ants.',
-    readTime: '6 min read',
-    slug: '#'
-  }
-];
+export const posts: Array<{
+  date: string;
+  title: string;
+  excerpt: string;
+  readTime: string;
+  slug: string;
+  category: string;
+}> = [];
 
 export default function Blog() {
   return (
-    <section id="blog" className="py-24 px-6 md:px-12 border-t border-sage/20 bg-obsidian/50">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-          <div>
-             <h2 className="font-serif text-4xl md:text-5xl text-sand mb-4">Field Notes</h2>
-             <p className="font-sans text-sage/70 max-w-md text-sm md:text-base">
-              Musings on nature, code, and the spaces in between.
-            </p>
+    <section id="blog" className="py-24 px-6 md:px-12 border-t border-sage/20 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto relative">
+        {/* Header */}
+        <div className="mb-16">
+          <motion.span
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="font-mono text-xs text-acid tracking-[0.3em] uppercase block mb-3"
+          >
+            Journal
+          </motion.span>
+          <div className="relative inline-block">
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="font-serif text-5xl md:text-6xl text-sand"
+            >
+              Notes
+            </motion.h2>
+            <motion.div
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+              className="absolute -bottom-3 left-0 w-24 h-[2px] bg-terracotta origin-left"
+            />
           </div>
-          
-          <a href="#" className="group flex items-center gap-2 font-mono text-sm text-acid hover:text-terracotta transition-colors">
-            VIEW ARCHIVE <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform"/>
-          </a>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {posts.map((post, index) => (
+        {/* Featured Post Placeholder */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-12"
+        >
+          <div className="block relative">
+            <div className="grid md:grid-cols-5 gap-8 md:gap-12 items-start">
+              {/* Left: Large number */}
+              <div className="hidden md:flex md:col-span-1 items-start justify-center pt-2">
+                <span className="font-serif text-[8rem] leading-none text-charcoal select-none">
+                  01
+                </span>
+              </div>
+
+              {/* Right: Content */}
+              <div className="md:col-span-4 border-l-2 border-sage/20 pl-8">
+                <div className="flex items-center gap-4 mb-4">
+                  <span className="font-mono text-[10px] text-obsidian bg-sage/30 px-3 py-1 uppercase tracking-wider">
+                    Coming Soon
+                  </span>
+                </div>
+
+                <h3 className="font-serif text-3xl md:text-4xl text-sage/40 mb-4 leading-tight">
+                  Notes from the field
+                </h3>
+
+                <p className="font-sans text-sage/40 text-base leading-relaxed max-w-2xl mb-6">
+                  Field research notes, technical deep-dives, and expedition journals will be shared here.
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-4 my-12">
+          <div className="flex-1 h-px bg-sage/15"/>
+          <span className="font-mono text-[10px] text-sage/40 tracking-widest">MORE NOTES</span>
+          <div className="flex-1 h-px bg-sage/15"/>
+        </div>
+
+        {/* Other Posts Placeholder - Staggered Layout */}
+        <div className="grid md:grid-cols-2 gap-x-12 gap-y-8">
+          {[0, 1].map((index) => (
             <motion.article
               key={index}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="group flex flex-col h-full bg-charcoal/30 border border-sage/10 p-6 hover:border-acid/30 transition-all duration-500 hover:bg-charcoal/50"
+              className={index === 0 ? 'md:translate-y-8' : ''}
             >
-              <div className="flex justify-between items-start mb-6">
-                <span className="font-mono text-xs text-acid border border-acid/20 px-2 py-1 rounded-sm">
-                  {post.date}
-                </span>
-                <span className="font-mono text-xs text-sage/50">
-                  {post.readTime}
-                </span>
-              </div>
+              <div className="block py-6 border-b border-sage/10">
+                <div className="flex items-start justify-between gap-6">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="font-mono text-[10px] text-sage/30 uppercase tracking-wider">
+                        Pending
+                      </span>
+                    </div>
 
-              <h3 className="font-serif text-2xl text-sand mb-4 group-hover:text-acid transition-colors">
-                {post.title}
-              </h3>
-              
-              <p className="font-sans text-sage/70 text-sm leading-relaxed flex-grow mb-8">
-                {post.excerpt}
-              </p>
+                    <div className="h-5 w-48 bg-sage/10 rounded mb-2" />
 
-              <div className="flex items-center gap-2 text-surf group-hover:text-sand transition-colors font-mono text-xs tracking-widest uppercase pt-6 border-t border-sage/10">
-                Read Article <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform"/>
+                    <div className="h-4 w-full bg-sage/5 rounded mb-1" />
+                    <div className="h-4 w-3/4 bg-sage/5 rounded" />
+                  </div>
+
+                  <div className="shrink-0 w-10 h-10 rounded-full border border-sage/10 flex items-center justify-center">
+                    <div className="w-4 h-4 rounded-full bg-sage/10" />
+                  </div>
+                </div>
               </div>
             </motion.article>
           ))}
         </div>
+
       </div>
     </section>
   );

@@ -38,17 +38,6 @@ export default function Hero() {
             </motion.h1>
           </div>
 
-          <div className="max-w-2xl">
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="font-sans text-lg md:text-xl text-sage/80 leading-relaxed"
-            >
-              Decoding the language of nature through computational intelligence. 
-              Bridging the gap between <span className="text-acid">biogeography</span> and <span className="text-acid">machine learning</span> to understand ecological patterns.
-            </motion.p>
-          </div>
         </div>
 
         <motion.div
