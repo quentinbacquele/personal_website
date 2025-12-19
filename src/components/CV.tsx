@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion';
-import { ArrowLeft, Download, ExternalLink, Calendar, MapPin, Award } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useState, useRef, useEffect } from 'react';
+import { Download } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 
 const currentPosition = {

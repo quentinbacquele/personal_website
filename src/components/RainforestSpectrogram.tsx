@@ -160,7 +160,7 @@ export default function RainforestSpectrogram() {
     };
   }>({});
 
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | undefined>(undefined);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   const timeLabelRef = useRef<HTMLSpanElement>(null);
@@ -250,7 +250,8 @@ export default function RainforestSpectrogram() {
     }
 
     // Use the texture's data array directly to ensure updates are visible
-    const spectrogramData = texture.image.data;
+    const spectrogramData = texture.image?.data as Uint8Array | null;
+    if (!spectrogramData) return;
     const normalizedBins = normalizedBinsRef.current;
     const smoothedRow = smoothedRowRef.current;
     const hasPrevRow = hasSmoothedRowRef.current;
@@ -637,7 +638,6 @@ export default function RainforestSpectrogram() {
 
     const axisOrigin = new THREE.Vector3(FREQ_SPAN + 10, 8, 0);
     const axisLen = 60;
-    const axisPadding = 6;
 
     const freqDirection = new THREE.Vector3(-1, 0, 0);
     const ampDirection = new THREE.Vector3(0, 1, 0);
