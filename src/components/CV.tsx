@@ -4,6 +4,15 @@ import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import Navbar from './Navbar';
 
+const currentPosition = {
+  role: 'PhD Candidate in Acoustic Biogeography',
+  institution: 'EPHE/ENES/CEFE',
+  location: 'Saint-Étienne / Montpellier, France',
+  period: '2024 - Present',
+  supervisors: 'Supervised by N. Mathevon and J-Y. Barnagaud',
+  details: "This thesis aims to map, explain, and predict the global diversity of bird vocalizations. It establishes a novel synergy between bioacoustics and biogeography, leveraging artificial intelligence and eco-informatics. The project develops a macroecological approach to acoustic communication strategies in birds, examining responses to environmental and anthropogenic constraints at a supra-continental scale.",
+};
+
 const education = [
   {
     degree: 'PhD Candidate in Acoustic Communication of Birds, Biogeography & Artificial Intelligence',
@@ -134,6 +143,36 @@ const research = [
   },
 ];
 
+const freelance = [
+  {
+    company: 'FauNet (Founder)',
+    projects: [
+      {
+        title: 'Facial recognition of rhesus monkeys',
+        client: 'SILABE (Simian Laboratory Europe)',
+        period: '2022 - 2024',
+        location: 'Strasbourg, France',
+        details: [
+          'Developed CNN-based systems (SSD & YOLOv7/8) for automated primate identification from video',
+          'Goal: To map social networks based on automated proximity detection',
+        ]
+      }
+    ]
+  }
+];
+
+const competitions = [
+  {
+    title: "Automatic Detection of Odontocetes' Clicks",
+    organizer: 'Toulon University (H. Glotin)',
+    period: 'Mar 2023 – Apr 2023',
+    details: [
+      'Bioacoustic challenge to distinguish dolphin biosonars from transient environmental noise',
+      'Implemented classification models using XGBoost, LSTMs, and CNNs',
+    ]
+  }
+];
+
 const fundings = [
   {
     title: 'PhD Stipend (PSL-EPHE EABIS Grant)',
@@ -223,8 +262,8 @@ const SectionHeading = ({ children, id }: { children: React.ReactNode; id: strin
 );
 
 export default function CV() {
-  const [activeSection, setActiveSection] = useState('publications');
-  const sections = ['publications', 'presentations', 'internships', 'fundings', 'teaching', 'education'];
+  const [activeSection, setActiveSection] = useState('current-position');
+  const sections = ['current-position', 'publications', 'presentations', 'internships', 'fundings', 'teaching', 'freelance', 'competitions', 'education'];
   
   // Spy on scroll to update active section
   useEffect(() => {
@@ -232,7 +271,7 @@ export default function CV() {
 
     const handleScroll = () => {
       if (window.scrollY < 150) {
-        setActiveSection('publications');
+        setActiveSection('current-position');
         return;
       }
 
@@ -316,6 +355,39 @@ export default function CV() {
             <p className="font-sans text-sage/60 text-lg">
               PhD Candidate in Acoustic Biogeography.
             </p>
+          </div>
+
+          {/* Current Position */}
+          <SectionHeading id="current-position">Current Position</SectionHeading>
+          <div className="mb-16">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="flex flex-col md:flex-row md:justify-between md:items-baseline gap-2 mb-2">
+                <h3 className="font-sans text-2xl text-sand font-medium">
+                  {currentPosition.role}
+                </h3>
+                <span className="font-mono text-xs text-acid shrink-0">
+                  {currentPosition.period}
+                </span>
+              </div>
+              
+              <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-xs text-sage/50 mb-2">
+                <span>{currentPosition.institution}</span>
+                <span className="text-sage/20">•</span>
+                <span>{currentPosition.location}</span>
+              </div>
+
+              <div className="font-mono text-xs text-sage/30 mb-4">
+                {currentPosition.supervisors}
+              </div>
+
+              <p className="font-sans text-sage/80 text-lg leading-relaxed">
+                {currentPosition.details}
+              </p>
+            </motion.div>
           </div>
 
           {/* Publications */}
@@ -510,6 +582,88 @@ export default function CV() {
                 </motion.div>
               ))}
             </div>
+          </div>
+
+          {/* Freelance */}
+          <SectionHeading id="freelance">Freelance</SectionHeading>
+          <div className="space-y-16">
+            {freelance.map((group, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+              >
+                {/* Company Header */}
+                <h3 className="font-mono text-xs text-acid uppercase tracking-widest mb-6 pb-2 border-b border-sage/10">
+                  {group.company}
+                </h3>
+
+                {/* Projects */}
+                <div className="space-y-12">
+                  {group.projects.map((project, pIndex) => (
+                    <div key={pIndex}>
+                      <div className="mb-4">
+                        <div className="flex flex-col md:flex-row md:justify-between md:items-baseline gap-2 mb-2">
+                          <h4 className="font-sans text-xl text-sand font-medium">
+                            {project.title}
+                          </h4>
+                          <span className="font-mono text-xs text-acid shrink-0">{project.period}</span>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-xs text-sage/50 mb-2">
+                          <span>Client: {project.client}</span>
+                          <span className="text-sage/20">•</span>
+                          <span>{project.location}</span>
+                        </div>
+                      </div>
+                      <ul className="space-y-2">
+                        {project.details.map((detail, dIndex) => (
+                          <li key={dIndex} className="flex items-start gap-3 text-sage/70 font-sans leading-relaxed text-base">
+                            <span className="mt-2.5 w-1 h-1 rounded-full bg-sage/40 shrink-0" />
+                            {detail}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Competitions */}
+          <SectionHeading id="competitions">Competitions</SectionHeading>
+          <div className="space-y-12">
+            {competitions.map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+              >
+                <div className="mb-4">
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-baseline gap-2 mb-2">
+                    <h3 className="font-sans text-xl text-sand font-medium">
+                      {item.title}
+                    </h3>
+                    <span className="font-mono text-xs text-acid shrink-0">{item.period}</span>
+                  </div>
+                  
+                  <div className="font-mono text-xs text-sage/50 mb-2">
+                    Organizer: {item.organizer}
+                  </div>
+                </div>
+                <ul className="space-y-2">
+                  {item.details.map((detail, i) => (
+                    <li key={i} className="flex items-start gap-3 text-sage/70 font-sans leading-relaxed text-base">
+                      <span className="mt-2.5 w-1 h-1 rounded-full bg-sage/40 shrink-0" />
+                      {detail}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
           </div>
 
           {/* Education */}
