@@ -7,6 +7,12 @@ const BlueskyIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const ScholarIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M5.242 13.769L0 9.5 12 0l12 9.5-5.242 4.269C17.548 11.249 14.978 9.5 12 9.5c-2.977 0-5.548 1.748-6.758 4.269zM12 10a7 7 0 1 0 0 14 7 7 0 0 0 0-14z"/>
+  </svg>
+);
+
 export default function Contact() {
   return (
     <section id="contact" className="py-24 px-6 md:px-12 border-t border-sage/20 bg-charcoal">
@@ -24,6 +30,7 @@ export default function Contact() {
           {[
             { icon: Mail, href: "mailto:qbacquele@gmail.com" },
             { icon: Github, href: "https://github.com/quentinbacquele" },
+            { icon: ScholarIcon, href: "https://scholar.google.com/citations?user=QT01HUEAAAAJ&hl=en" },
             { icon: Linkedin, href: "https://www.linkedin.com/in/quentin-bacquel%C3%A9-74a462226/" },
             { icon: Twitter, href: "https://x.com/QBacquele" },
             { icon: BlueskyIcon, href: "https://bsky.app/profile/quentinbacquele.bsky.social" },
