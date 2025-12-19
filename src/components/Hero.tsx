@@ -44,7 +44,7 @@ export default function Hero() {
           initial={{ opacity: 0, x: 40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 1.2, delay: 0.4 }}
-          className="flex-1 w-full flex justify-center lg:justify-end mt-0 lg:-mt-40"
+          className="flex-1 w-full flex justify-center lg:justify-end mt-12 lg:-mt-20 scale-125 origin-center lg:origin-top-right"
         >
           <RainforestSpectrogram />
         </motion.div>

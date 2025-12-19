@@ -27,7 +27,7 @@ const publications = [
 
 export default function Research() {
   return (
-    <section id="research" className="py-24 px-6 md:px-12 border-t border-sage/20">
+    <section id="research" className="py-24 px-6 md:px-20 border-t border-sage/20">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start mb-16 gap-8">
           <h2 className="font-serif text-4xl md:text-5xl text-sand">Selected Research</h2>
@@ -42,15 +42,15 @@ export default function Research() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="group block border-t border-sage/25 py-8 hover:bg-terracotta/5 transition-colors relative"
+              className="group block border-t border-sage/25 py-10 px-4 md:px-8 hover:bg-terracotta/5 transition-colors relative"
             >
-              <div className="grid grid-cols-1 md:grid-cols-[80px_1fr_auto] gap-4 md:gap-8 items-start">
+              <div className="grid grid-cols-1 md:grid-cols-[80px_1fr_auto] gap-4 md:gap-12 items-start">
                 {/* Year */}
                 <div className="font-mono text-acid text-sm">{pub.year}</div>
 
                 {/* Title & Journal */}
                 <div>
-                  <h3 className="font-serif text-xl md:text-2xl text-sand mb-2 group-hover:text-acid transition-colors leading-snug">
+                  <h3 className="font-serif text-xl md:text-2xl text-sand mb-2 group-hover:text-acid transition-colors leading-relaxed tracking-wide">
                     {pub.title}
                   </h3>
                   <div className="font-sans text-sage/70 text-sm italic">{pub.journal}</div>
