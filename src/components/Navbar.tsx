@@ -5,8 +5,9 @@ import { Link, useLocation } from 'react-router-dom';
 
 const links = [
   { name: 'Research', href: '/#research' },
-  { name: 'Notes', href: '/#blog' },
   { name: 'About', href: '/#about' },
+  { name: 'Notes', href: '/#blog' },
+  { name: 'CV', href: '/cv' },
   { name: 'Contact', href: '/#contact' },
 ];
 
@@ -34,12 +35,20 @@ export default function Navbar() {
         {/* Glass pill container */}
         <div className="flex items-center justify-between gap-4 px-6 py-3 rounded-full bg-white/[0.03] backdrop-blur-2xl backdrop-saturate-150 border border-white/[0.08] shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
           {/* Logo */}
-          <Link
-            to="/"
-            className="text-xl font-serif italic text-sage hover:text-acid transition-colors"
+          <a
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              if (isHomePage) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              } else {
+                window.location.href = '/';
+              }
+            }}
+            className="text-xl font-serif italic text-sage hover:text-acid transition-colors cursor-pointer"
           >
             QB.
-          </Link>
+          </a>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-1">
@@ -50,7 +59,7 @@ export default function Navbar() {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.1 * (i + 1) }}
               >
-                {isHomePage ? (
+                {isHomePage && link.href.startsWith('/#') ? (
                   <a
                     href={link.href.replace('/', '')}
                     onClick={(e) => {
@@ -93,7 +102,7 @@ export default function Navbar() {
           >
             <div className="flex flex-col gap-1">
               {links.map((link) => (
-                isHomePage ? (
+                isHomePage && link.href.startsWith('/#') ? (
                   <a
                     key={link.name}
                     href={link.href.replace('/', '')}

@@ -35,8 +35,8 @@ function App() {
       <main className="relative z-10">
         <Hero />
         <Research />
-        <Blog />
         <About />
+        <Blog />
         <Contact />
       </main>
     </div>

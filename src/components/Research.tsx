@@ -5,22 +5,25 @@ const publications = [
   {
     year: '2025',
     title: 'HAC-Net: Learning Natural Units from Acoustic Change',
+    authors: 'Quentin Bacquelé, Jean-Yves Barnagaud, Frederic Theunissen, Nicolas Mathevon',
     journal: 'NeurIPS 2025',
-    tags: ['Deep Learning', 'Bioacoustics'],
+    tags: ['Acoustic Segmentation', 'Pattern Discovery'],
     link: 'https://openreview.net/pdf?id=VWLd8irCtH'
   },
   {
     year: 'N/A',
     title: 'A novel contour-based approach for quantifying cryptic vocal dialects in songbirds',
+    authors: 'Quentin Bacquelé, Barbara Freitas, Borja Milá, Christophe Thébaud, Nicolas Mathevon, Frédéric Theunissen',
     journal: 'In Preparation',
-    tags: ['Bioacoustics', 'Dialects'],
+    tags: ['Frequency Contour', 'Dialects'],
     link: '#'
   },
   {
     year: 'N/A',
     title: 'The global biogeography of passerine songs',
+    authors: 'Quentin Bacquelé, Jean-Yves Barnagaud, Cyrille Violle, Frédéric Theunissen, Nicolas Mathevon',
     journal: 'In Preparation',
-    tags: ['Biogeography', 'Macroecology'],
+    tags: ['Birdsong Evolution', 'Acoustic Motifs'],
     link: '#'
   }
 ];
@@ -53,6 +56,7 @@ export default function Research() {
                   <h3 className="font-serif text-xl md:text-2xl text-sand mb-2 group-hover:text-acid transition-colors leading-relaxed tracking-wide">
                     {pub.title}
                   </h3>
+                  <div className="text-sage/60 text-sm mb-2 font-sans">{pub.authors}</div>
                   <div className="font-sans text-sage/70 text-sm italic">{pub.journal}</div>
                   {/* Tags - mobile */}
                   <div className="flex gap-2 mt-3 md:hidden">

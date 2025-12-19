@@ -6,6 +6,12 @@ import Navbar from './Navbar';
 
 const education = [
   {
+    degree: 'PhD Candidate in Acoustic Communication of Birds, Biogeography & Artificial Intelligence',
+    institution: 'EPHE/ENES/CEFE',
+    location: 'Saint-Étienne, France',
+    period: '2024 - 2027',
+  },
+  {
     degree: 'M.Sc. International Master in Bioacoustics (MoBi)',
     institution: 'Jean Monnet University',
     location: 'Saint-Etienne, France',
@@ -45,16 +51,51 @@ const education = [
   },
 ];
 
+const publications = [
+  {
+    year: '2025',
+    title: 'HAC-Net: Learning Natural Units from Acoustic Change',
+    authors: 'Quentin Bacquelé, Jean-Yves Barnagaud, Frederic Theunissen, Nicolas Mathevon',
+    journal: 'NeurIPS 2025',
+    tags: ['Acoustic Segmentation', 'Pattern Discovery'],
+    link: 'https://openreview.net/pdf?id=VWLd8irCtH'
+  },
+  {
+    year: '2025',
+    title: 'AI Decodes Chimpanzee Vocabulary Items',
+    authors: 'Antoine Valet, Quentin Bacquelé, Cédric Girard-Buttoz, Roman M Wittig, Catherine Crockford',
+    journal: 'NeurIPS 2025',
+    tags: ['Contextual Classification'],
+    link: '#'
+  },
+  {
+    year: 'N/A',
+    title: 'A novel contour-based approach for quantifying cryptic vocal dialects in songbirds',
+    authors: 'Quentin Bacquelé, Barbara Freitas, Borja Milá, Christophe Thébaud, Nicolas Mathevon, Frédéric Theunissen',
+    journal: 'In Preparation',
+    tags: ['Frequency Contour', 'Dialects'],
+    link: '#'
+  },
+  {
+    year: 'N/A',
+    title: 'The global biogeography of passerine songs',
+    authors: 'Quentin Bacquelé, Jean-Yves Barnagaud, Cyrille Violle, Frédéric Theunissen, Nicolas Mathevon',
+    journal: 'In Preparation',
+    tags: ['Birdsong Evolution', 'Acoustic Motifs'],
+    link: '#'
+  }
+];
+
 const research = [
   {
-    title: 'AI-Driven Statistical Methods for Clustering Animal Vocalizations',
+    title: 'A novel contour-based approach for quantifying cryptic vocal dialects in songbirds',
     institution: 'University of California at Berkeley',
     supervisors: 'F. Theunissen & N. Mathevon',
     location: 'Berkeley, USA',
     period: '2024',
     details: [
-      'Comparison of vocal characteristics across morphotypes and populations of two bird species',
-      'Clustering bonobo vocalizations with AI, exploring acoustic diversity',
+      'Revealing subtle acoustic differences between the 4 parapatric forms of La Réunion Island Grey White-Eye',
+      'A new method: the pitch contour method',
       'PCA, UMAP, t-SNE, Random Forests, SVM, Variational Autoencoders',
     ],
   },
@@ -63,7 +104,7 @@ const research = [
     institution: 'ENES Lab, Jean Monnet University',
     supervisors: 'F. Levrero, C. Crockford & C. Girard-Buttoz',
     location: 'Saint-Etienne, France',
-    period: '2023 - 2024',
+    period: '2023',
     details: [
       'Investigation of the hoo+grunt call sequence with potential for compositional meaning',
       'PerMANOVAs, LDAs classification and HDBSCAN clustering',
@@ -93,24 +134,80 @@ const research = [
   },
 ];
 
+const fundings = [
+  {
+    title: 'PhD Stipend (PSL-EPHE EABIS Grant)',
+    source: 'University Paris-Sciences-Lettres',
+    year: '2024 - 2027',
+    amount: '€80,400'
+  },
+  {
+    title: 'Mobility Grant',
+    source: 'EPHE',
+    year: '2024',
+    amount: '€500'
+  }
+];
+
+const teaching = [
+  {
+    course: 'Sound Resynthesis',
+    period: '2025 (4h)',
+    level: 'M.Sc. Bioacoustics',
+    institution: 'Jean Monnet University',
+  },
+  {
+    course: 'Statistics',
+    period: '2024 - 2025 (16h)',
+    level: 'Master 2 Ecology',
+    institution: 'Jean Monnet University',
+  },
+  {
+    course: 'Ecology (Practical Work)',
+    period: '2024 (28h)',
+    level: 'B.Sc. Life Sciences (L2 & L3)',
+    institution: 'Jean Monnet University',
+  }
+];
+
+const supervision = [
+  {
+    title: 'Python for Bioacoustics',
+    role: 'Mentorship (2 students)',
+    institution: 'UC Berkeley',
+    details: [],
+  },
+  {
+    title: 'M.Sc. Project Supervision',
+    role: 'Supervisor/Co-supervisor',
+    institution: 'M.Sc. in Bioacoustics (MoBi), Jean Monnet University',
+    details: [
+      'Biogeography of rhythm in passerine birds',
+      'Phylogeny of non-linear phenomena in mammals',
+    ],
+  }
+];
+
 const presentations = [
+  {
+    title: 'HAC-Net: Learning Natural Units from Acoustic Change',
+    event: 'NeurIPS 2025',
+    location: 'San Diego, USA',
+    type: 'Poster',
+  },
   {
     title: 'An AI based approach for planarian behavior analysis',
     event: 'NeuroFrance 2023',
     location: 'Lyon, France',
+    type: 'Poster',
   },
   {
     title: 'Passive Acoustic Monitoring to discover the hidden nightlife of wild bottlenose dolphins',
     event: '34th European Cetacean Society Conference',
     location: 'O Grove, Spain',
+    type: 'Poster',
   },
 ];
-
-const skills = {
-  'Statistics & Visualization': ['R', 'Python', 'Tidyverse', 'ggplot2', 'numpy', 'pandas', 'matplotlib', 'plotly'],
-  'Machine Learning': ['Scikit-Learn', 'Keras', 'PyTorch', 'Classification', 'Clustering', 'Dimensionality Reduction'],
-  'Bioacoustics': ['Seewave', 'Soundgen', 'WarbleR', 'Librosa', 'Praat', 'Raven', 'PAMGuard'],
-};
 
 const SectionHeading = ({ children, id }: { children: React.ReactNode; id: string }) => (
   <motion.div
@@ -126,8 +223,8 @@ const SectionHeading = ({ children, id }: { children: React.ReactNode; id: strin
 );
 
 export default function CV() {
-  const [activeSection, setActiveSection] = useState('education');
-  const sections = ['education', 'research', 'presentations', 'skills'];
+  const [activeSection, setActiveSection] = useState('publications');
+  const sections = ['publications', 'presentations', 'internships', 'fundings', 'teaching', 'education'];
   
   // Spy on scroll to update active section
   useEffect(() => {
@@ -135,7 +232,7 @@ export default function CV() {
 
     const handleScroll = () => {
       if (window.scrollY < 150) {
-        setActiveSection('education');
+        setActiveSection('publications');
         return;
       }
 
@@ -221,47 +318,70 @@ export default function CV() {
             </p>
           </div>
 
-          {/* Education */}
-          <SectionHeading id="education">Education</SectionHeading>
-          <div className="space-y-12 relative ml-2 md:ml-4">
-            {education.map((item, index) => (
-              <motion.div
+          {/* Publications */}
+          <SectionHeading id="publications">Publications</SectionHeading>
+          <div className="space-y-8">
+            {publications.map((pub, index) => (
+              <motion.a
                 key={index}
+                href={pub.link}
+                target={pub.link !== '#' ? "_blank" : undefined}
+                rel={pub.link !== '#' ? "noopener noreferrer" : undefined}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-10%" }}
+                viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="relative pl-6 border-l border-sage/10"
+                className="block group border-l-2 border-sage/10 pl-6 hover:border-acid transition-colors"
               >
-                {/* Timeline Dot */}
-                <div className="absolute -left-[5px] top-2 w-2.5 h-2.5 rounded-full bg-obsidian border border-sage/40" />
-
                 <div className="flex flex-col md:flex-row md:justify-between md:items-baseline gap-2 mb-2">
-                  <h3 className="font-sans text-xl text-sand font-medium leading-snug">
-                    {item.degree}
+                  <h3 className="font-sans text-xl text-sand font-medium leading-snug group-hover:text-acid transition-colors">
+                    {pub.title}
                   </h3>
-                  <span className="font-mono text-xs text-acid">
-                    {item.period}
+                  <span className="font-mono text-xs text-acid shrink-0">
+                    {pub.year}
                   </span>
                 </div>
                 
-                <div className="flex flex-col md:flex-row gap-x-6 gap-y-1 text-sm text-sage/60 font-mono mb-2">
-                  <span>{item.institution}</span>
-                  <span className="hidden md:inline text-sage/20">•</span>
-                  <span>{item.location}</span>
+                <div className="text-sage/60 text-sm mb-2 font-sans">{pub.authors}</div>
+
+                <div className="flex flex-wrap gap-x-4 gap-y-1 items-center font-mono text-xs text-sage/60">
+                  <span className="text-surf">{pub.journal}</span>
+                  {pub.tags.map(tag => (
+                    <span key={tag} className="px-2 py-0.5 border border-sage/20 rounded-full text-sage/40">
+                      {tag}
+                    </span>
+                  ))}
                 </div>
-                
-                {item.note && (
-                  <p className="font-sans text-sm text-surf/80 italic mt-1">
-                    {item.note}
-                  </p>
-                )}
+              </motion.a>
+            ))}
+          </div>
+
+          {/* Presentations */}
+          <SectionHeading id="presentations">Presentations</SectionHeading>
+          <div className="grid md:grid-cols-2 gap-x-12 gap-y-12">
+            {presentations.map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+              >
+                <h3 className="font-sans text-lg text-sand font-medium mb-2 leading-snug">
+                  {item.title}
+                </h3>
+                <div className="flex justify-between items-baseline font-mono text-xs pt-2 border-t border-sage/10">
+                  <div className="flex gap-3">
+                    <span className="text-acid uppercase tracking-wider">{item.type}</span>
+                    <span className="text-surf">{item.event}</span>
+                  </div>
+                  <span className="text-sage/40">{item.location}</span>
+                </div>
               </motion.div>
             ))}
           </div>
 
-          {/* Research */}
-          <SectionHeading id="research">Research</SectionHeading>
+          {/* Internships (formerly Research) */}
+          <SectionHeading id="internships">Internships</SectionHeading>
           <div className="space-y-16">
             {research.map((item, index) => (
               <motion.div
@@ -301,75 +421,139 @@ export default function CV() {
             ))}
           </div>
 
-          {/* Presentations */}
-          <SectionHeading id="presentations">Presentations</SectionHeading>
-          <div className="grid md:grid-cols-2 gap-x-12 gap-y-12">
-            {presentations.map((item, index) => (
+          {/* Fundings */}
+          <SectionHeading id="fundings">Fundings</SectionHeading>
+          <div className="space-y-8">
+            {fundings.map((item, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
               >
-                <h3 className="font-sans text-lg text-sand font-medium mb-2 leading-snug">
-                  {item.title}
-                </h3>
-                <div className="flex justify-between items-baseline font-mono text-xs pt-2 border-t border-sage/10">
-                  <span className="text-surf">{item.event}</span>
-                  <span className="text-sage/40">{item.location}</span>
+                <div className="flex flex-col md:flex-row md:justify-between md:items-baseline gap-2 mb-2">
+                  <h3 className="font-sans text-xl text-sand font-medium">
+                    {item.title}
+                  </h3>
+                  <span className="font-mono text-xs text-acid">
+                    {item.year}
+                  </span>
+                </div>
+                <div className="flex justify-between items-baseline font-mono text-xs text-sage/60">
+                  <span>{item.source}</span>
+                  <span className="text-surf">{item.amount}</span>
                 </div>
               </motion.div>
             ))}
           </div>
 
-          {/* Skills */}
-          <SectionHeading id="skills">Skills</SectionHeading>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12">
-            {Object.entries(skills).map(([category, items], catIndex) => (
+          {/* Teaching */}
+          <SectionHeading id="teaching">Teaching</SectionHeading>
+          <div className="space-y-12">
+            
+            {/* Courses */}
+            <div className="space-y-8">
+              <h3 className="font-mono text-xs text-acid uppercase tracking-widest mb-6 pb-2 border-b border-sage/10">Courses</h3>
+              {teaching.map((item, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                >
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-baseline gap-2 mb-2">
+                    <h3 className="font-sans text-xl text-sand font-medium">
+                      {item.course}
+                    </h3>
+                    <span className="font-mono text-xs text-acid">
+                      {item.period}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-baseline font-mono text-xs text-sage/60">
+                    <span>{item.level}</span>
+                    <span className="text-surf">{item.institution}</span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Supervision */}
+            <div className="space-y-8">
+              <h3 className="font-mono text-xs text-acid uppercase tracking-widest mb-6 pb-2 border-b border-sage/10">Supervision</h3>
+              {supervision.map((item, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                >
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-baseline gap-2 mb-2">
+                    <h3 className="font-sans text-xl text-sand font-medium">
+                      {item.title}
+                    </h3>
+                    <span className="font-mono text-xs text-acid">
+                      {item.role}
+                    </span>
+                  </div>
+                  <div className="font-mono text-xs text-surf mb-3">
+                    {item.institution}
+                  </div>
+                  {item.details.length > 0 && (
+                    <ul className="space-y-2 pl-4 border-l-2 border-sage/10">
+                      {item.details.map((detail, i) => (
+                        <li key={i} className="font-mono text-xs text-sage/60">
+                          {detail}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Education */}
+          <SectionHeading id="education">Education</SectionHeading>
+          <div className="space-y-12 relative ml-2 md:ml-4">
+            {education.map((item, index) => (
               <motion.div
-                key={category}
+                key={index}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: catIndex * 0.1 }}
+                viewport={{ once: true, margin: "-10%" }}
+                transition={{ delay: index * 0.1 }}
+                className="relative pl-6 border-l border-sage/10"
               >
-                <h3 className="font-mono text-xs text-acid uppercase tracking-widest mb-6 pb-2 border-b border-sage/10">
-                  {category}
-                </h3>
-                <ul className="space-y-2">
-                  {items.map((skill, i) => (
-                    <li
-                      key={skill}
-                      className="font-mono text-sm text-sage/70"
-                    >
-                      {skill}
-                    </li>
-                  ))}
-                </ul>
+                {/* Timeline Dot */}
+                <div className="absolute -left-[5px] top-2 w-2.5 h-2.5 rounded-full bg-obsidian border border-sage/40" />
+
+                <div className="flex flex-col md:flex-row md:justify-between md:items-baseline gap-2 mb-2">
+                  <h3 className="font-sans text-xl text-sand font-medium leading-snug">
+                    {item.degree}
+                  </h3>
+                  <span className="font-mono text-xs text-acid whitespace-nowrap">
+                    {item.period}
+                  </span>
+                </div>
+                
+                <div className="flex flex-col md:flex-row gap-x-6 gap-y-1 text-sm text-sage/60 font-mono mb-2">
+                  <span>{item.institution}</span>
+                  <span className="hidden md:inline text-sage/20">•</span>
+                  <span>{item.location}</span>
+                </div>
+                
+                {item.note && (
+                  <p className="font-sans text-sm text-surf/80 italic mt-1">
+                    {item.note}
+                  </p>
+                )}
               </motion.div>
             ))}
           </div>
 
-          {/* Languages */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="mt-24 pt-12 border-t border-sage/10 flex flex-wrap gap-12"
-          >
-            <div>
-              <span className="font-sans text-sand text-lg font-medium block mb-1">French</span>
-              <span className="font-mono text-xs text-acid uppercase tracking-wider">Native</span>
-            </div>
-            <div>
-              <span className="font-sans text-sand text-lg font-medium block mb-1">English</span>
-              <span className="font-mono text-xs text-surf uppercase tracking-wider">Fluent</span>
-            </div>
-            <div>
-              <span className="font-sans text-sand text-lg font-medium block mb-1">German</span>
-              <span className="font-mono text-xs text-sage/40 uppercase tracking-wider">Elementary</span>
-            </div>
-          </motion.div>
+          <div className="mt-32 pt-12 border-t border-sage/10 text-center font-mono text-[10px] text-sage/30 uppercase tracking-widest">
+            © 2025 Quentin Bacquelé. All Rights Reserved.
+          </div>
 
         </main>
       </div>
