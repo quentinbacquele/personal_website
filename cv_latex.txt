@@ -128,31 +128,18 @@
 \begin{center}
     \textbf{\Huge \scshape Quentin Bacquelé} \\ \vspace{3pt}
     \small
-    \faMobile \hspace{.5pt} \href{tel:0651189696}{+33 6 51 18 96 96}
+    \faAt \hspace{.5pt} \href{mailto:qbacquele@gmail.com}{qbacquele@gmail.com}
     $|$
-    \faAt \hspace{.5pt} \href{mailto:quentin.bacquele@etu.unistra.fr}{quentin.bacquele@etu.unistra.fr}
+    \faGithub \hspace{.5pt} \href{https://github.com/quentinbacquele}{GitHub}
     $|$
-   \faResearchgate \hspace{.5pt} \href{https://www.researchgate.net/profile/Quentin_Bacquele}{ResearchGate}
-    $|$
-    \faMapMarker \hspace{.5pt} Saint-Étienne / Montpellier, France
+    \faGraduationCap \hspace{.5pt} \href{https://scholar.google.com/citations?user=QT01HUEAAAAJ&hl=en}{Google Scholar}
 \end{center}
 
 
-%----------- CURRENT POSITION -----------
+%----------- INTRODUCTION -----------
 
-\section{\tcbox{Current Position}}
-  \vspace{3pt}
-  \resumeSubHeadingListStart
-
-    \resumeSubheading
-      {PhD Candidate in Acoustic Biogeography}{Saint-Étienne / Montpellier, France}
-      {EPHE/ENES/CEFE - Supervised by N. Mathevon and J-Y. Barnagaud}{2024 \textbf{--} Present}
-        \resumeItemListStart
-            \resumeItem{This thesis aims to map, explain, and predict the global diversity of bird vocalizations. It establishes a novel synergy between bioacoustics and biogeography, leveraging artificial intelligence and eco-informatics.}
-            \resumeItem{The project develops a macroecological approach to acoustic communication strategies in birds, examining responses to environmental and anthropogenic constraints at a supra-continental scale.}
-        \resumeItemListEnd
-
-  \resumeSubHeadingListEnd
+\vspace{6pt}
+PhD candidate in Acoustic Biogeography at EPHE/ENES/CEFE, supervised by N. Mathevon and J-Y. Barnagaud. My research aims to map, explain, and predict the global diversity of bird vocalizations by establishing a novel synergy between bioacoustics and biogeography, leveraging artificial intelligence and eco-informatics.
 
 
 %----------- EDUCATION -----------
@@ -212,37 +199,25 @@
 
     \resumeSubheading
       {\href{https://openreview.net/pdf?id=VWLd8irCtH}{HAC-Net: Learning Natural Units from Acoustic Change}}{2025}
-      {Quentin Bacquelé, Jean-Yves Barnagaud, Frederic Theunissen, Nicolas Mathevon}{}
-        \resumeItemListStart
-            \resumeItem{NeurIPS 2025 -- Acoustic Segmentation, Pattern Discovery}
-        \resumeItemListEnd
+      {Quentin Bacquelé, Jean-Yves Barnagaud, Frederic Theunissen, Nicolas Mathevon}{NeurIPS 2025}
 
     \vspace{4pt}
 
     \resumeSubheading
       {AI Decodes Chimpanzee Vocabulary Items}{2025}
-      {Antoine Valet, Quentin Bacquelé, Cédric Girard-Buttoz, Roman M Wittig, Catherine Crockford}{}
-        \resumeItemListStart
-            \resumeItem{NeurIPS 2025 -- Contextual Classification}
-        \resumeItemListEnd
+      {Antoine Valet, Quentin Bacquelé, Cédric Girard-Buttoz, Roman M Wittig, Catherine Crockford}{NeurIPS 2025}
 
     \vspace{4pt}
 
     \resumeSubheading
       {A novel contour-based approach for quantifying cryptic vocal dialects in songbirds}{In Preparation}
       {Quentin Bacquelé, Barbara Freitas, Borja Milá, Christophe Thébaud, Nicolas Mathevon, Frédéric Theunissen}{}
-        \resumeItemListStart
-            \resumeItem{Frequency Contour, Dialects}
-        \resumeItemListEnd
 
     \vspace{4pt}
 
     \resumeSubheading
       {The global biogeography of passerine songs}{In Preparation}
       {Quentin Bacquelé, Jean-Yves Barnagaud, Cyrille Violle, Frédéric Theunissen, Nicolas Mathevon}{}
-        \resumeItemListStart
-            \resumeItem{Birdsong Evolution, Acoustic Motifs}
-        \resumeItemListEnd
 
   \resumeSubHeadingListEnd
 
@@ -281,41 +256,24 @@
     \resumeSubheading
       {A novel contour-based approach for quantifying cryptic vocal dialects in songbirds}{Berkeley, USA}
       {University of California at Berkeley - Supervised by F. Theunissen \& N. Mathevon}{2024}
-        \resumeItemListStart
-            \resumeItem{Revealing subtle acoustic differences between the 4 parapatric forms of La Réunion Island Grey White-Eye.}
-            \resumeItem{A new method: the pitch contour method.}
-            \resumeItem{PCA, UMAP, t-SNE, Random Forests, SVM, Variational Autoencoders.}
-        \resumeItemListEnd
 
     \vspace{4pt}
 
     \resumeSubheading
       {Can chimpanzees flexibly combine calls to create new meanings?}{Saint-Étienne, France}
       {ENES Lab, Jean Monnet University - Supervised by F. Levrero, C. Crockford \& C. Girard-Buttoz}{2023}
-        \resumeItemListStart
-            \resumeItem{Investigation of the hoo+grunt call sequence with potential for compositional meaning.}
-            \resumeItem{PerMANOVAs, LDAs classification and HDBSCAN clustering.}
-        \resumeItemListEnd
 
     \vspace{4pt}
 
     \resumeSubheading
       {An AI based approach for planarian behavior analysis}{Strasbourg, France}
       {Institute of Cellular and Integrative Neuroscience (CNRS) - Supervised by H. Cadiou}{2023}
-        \resumeItemListStart
-            \resumeItem{Development of software for automatic planarian tracking using AI.}
-            \resumeItem{Behavioral experiments on magnetic sense in planarians.}
-        \resumeItemListEnd
 
     \vspace{4pt}
 
     \resumeSubheading
       {Passive Acoustic Monitoring of wild bottlenose dolphins}{Ría de Arousa, Spain}
       {Bottlenose Research Institute (BDRI) - Supervised by S. Methion \& B. Diaz Lopez}{2022}
-        \resumeItemListStart
-            \resumeItem{PAM to discover the hidden nightlife of wild bottlenose dolphins.}
-            \resumeItem{Acoustic data extraction and cetacean click train identification.}
-        \resumeItemListEnd
 
   \resumeSubHeadingListEnd
 
@@ -396,10 +354,6 @@
     \resumeSubheading
       {FauNet (Founder) -- Facial recognition of rhesus monkeys}{Strasbourg, France}
       {Client: SILABE (Simian Laboratory Europe)}{2022 \textbf{--} 2024}
-        \resumeItemListStart
-            \resumeItem{Developed CNN-based systems (SSD \& YOLOv7/8) for automated primate identification from video.}
-            \resumeItem{Goal: To map social networks based on automated proximity detection.}
-        \resumeItemListEnd
 
   \resumeSubHeadingListEnd
 
@@ -413,10 +367,6 @@
     \resumeSubheading
       {Automatic Detection of Odontocetes' Clicks}{Online}
       {Toulon University - Organized by H. Glotin}{Mar 2023 \textbf{--} Apr 2023}
-        \resumeItemListStart
-            \resumeItem{Bioacoustic challenge to distinguish dolphin biosonars from transient environmental noise.}
-            \resumeItem{Implemented classification models using XGBoost, LSTMs, and CNNs.}
-        \resumeItemListEnd
 
   \resumeSubHeadingListEnd
 

@@ -333,7 +333,8 @@ export default function CV() {
 
             <div className="pt-8 border-t border-sage/10">
               <a
-                href="#"
+                href="/pdfs/CV_Quentin_Bacquele.pdf"
+                download
                 className="group flex items-center gap-3 font-mono text-xs text-sand/80 hover:text-acid transition-colors"
               >
                 <span className="p-2 rounded-full bg-charcoal group-hover:bg-acid/10 transition-colors">
