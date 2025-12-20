@@ -1,7 +1,8 @@
 {
-  "name": "personal_website",
+  "name": "quentinbacquele",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Personal website of Quentin Bacquelé - PhD Candidate in Bioacoustics & AI",
   "type": "module",
   "scripts": {
     "dev": "vite",

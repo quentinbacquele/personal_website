@@ -1,0 +1,6 @@
+# robots.txt for quentinbacquele.vercel.app
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://quentinbacquele.vercel.app/sitemap.xml
