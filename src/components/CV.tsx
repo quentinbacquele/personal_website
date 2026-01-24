@@ -389,7 +389,6 @@ export default function CV() {
                     <div
                       key={logo.name}
                       className={`${logo.wide ? 'w-36 h-16' : 'w-24 h-24'} rounded-xl bg-white overflow-hidden flex items-center justify-center`}
-                      title={logo.name}
                     >
                       <img
                         src={logo.src}
@@ -501,7 +500,6 @@ export default function CV() {
                     {item.logo && (
                       <div
                         className={`${item.logo.wide ? 'w-32 h-14' : 'w-20 h-20'} rounded-xl bg-white overflow-hidden flex items-center justify-center shrink-0`}
-                        title={item.logo.name}
                       >
                         <img
                           src={item.logo.src}
