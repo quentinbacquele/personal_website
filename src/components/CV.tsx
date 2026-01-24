@@ -10,6 +10,11 @@ const currentPosition = {
   period: '2024 - Present',
   supervisors: 'Supervised by N. Mathevon and J-Y. Barnagaud',
   details: "This thesis aims to map, explain, and predict the global diversity of bird vocalizations. It establishes a novel synergy between bioacoustics and biogeography, leveraging artificial intelligence and eco-informatics. The project develops a macroecological approach to acoustic communication strategies in birds, examining responses to environmental and anthropogenic constraints at a supra-continental scale.",
+  logos: [
+    { name: 'EPHE', src: '/logos/ephe.jpg', wide: false },
+    { name: 'ENES', src: '/logos/enes.jpg', wide: true },
+    { name: 'CEFE', src: '/logos/cefe.png', wide: true },
+  ],
 };
 
 const education = [
@@ -101,6 +106,7 @@ const research = [
     supervisors: 'F. Theunissen & N. Mathevon',
     location: 'Berkeley, USA',
     period: '2024',
+    logo: { name: 'UC Berkeley', src: '/logos/berkeley.svg', wide: false },
     details: [
       'Revealing subtle acoustic differences between the 4 parapatric forms of La Réunion Island Grey White-Eye',
       'A new method: the pitch contour method',
@@ -113,6 +119,7 @@ const research = [
     supervisors: 'F. Levrero, C. Crockford & C. Girard-Buttoz',
     location: 'Saint-Etienne, France',
     period: '2023',
+    logo: { name: 'ENES Lab', src: '/logos/enes.jpg', wide: true },
     details: [
       'Investigation of the hoo+grunt call sequence with potential for compositional meaning',
       'PerMANOVAs, LDAs classification and HDBSCAN clustering',
@@ -124,6 +131,7 @@ const research = [
     supervisors: 'H. Cadiou',
     location: 'Strasbourg, France',
     period: '2023',
+    logo: { name: 'INCI', src: '/logos/inci.png', wide: true },
     details: [
       'Development of software for automatic planarian tracking using AI',
       'Behavioral experiments on magnetic sense in planarians',
@@ -135,6 +143,7 @@ const research = [
     supervisors: 'S. Methion & B. Diaz Lopez',
     location: 'Ria de Arousa, Spain',
     period: '2022',
+    logo: { name: 'BDRI', src: '/logos/bdri.jpg', wide: false },
     details: [
       'PAM to discover the hidden nightlife of wild bottlenose dolphins',
       'Acoustic data extraction and cetacean click train identification',
@@ -374,14 +383,32 @@ export default function CV() {
                 </span>
               </div>
               
-              <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-xs text-sage/50 mb-2">
-                <span>{currentPosition.institution}</span>
-                <span className="text-sage/20">•</span>
-                <span>{currentPosition.location}</span>
-              </div>
-
-              <div className="font-mono text-xs text-sage/30 mb-4">
-                {currentPosition.supervisors}
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex items-center gap-3 shrink-0">
+                  {currentPosition.logos.map((logo) => (
+                    <div
+                      key={logo.name}
+                      className={`${logo.wide ? 'w-36 h-16' : 'w-24 h-24'} rounded-xl bg-white overflow-hidden flex items-center justify-center`}
+                      title={logo.name}
+                    >
+                      <img
+                        src={logo.src}
+                        alt={logo.name}
+                        className="w-full h-full object-contain p-1.5"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <div className="flex flex-wrap gap-x-2 gap-y-1 font-mono text-xs text-sage/50">
+                    <span>{currentPosition.institution}</span>
+                    <span className="text-sage/20">•</span>
+                    <span>{currentPosition.location}</span>
+                  </div>
+                  <div className="font-mono text-xs text-sage/30 mt-1">
+                    {currentPosition.supervisors}
+                  </div>
+                </div>
               </div>
 
               <p className="font-sans text-sage/80 text-lg leading-relaxed">
@@ -469,15 +496,30 @@ export default function CV() {
                     </h3>
                     <span className="font-mono text-xs text-acid shrink-0">{item.period}</span>
                   </div>
-                  
-                  <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-xs text-sage/50 mb-2">
-                    <span>{item.institution}</span>
-                    <span className="text-sage/20">•</span>
-                    <span>{item.location}</span>
-                  </div>
-                  
-                  <div className="font-mono text-xs text-sage/30">
-                    Supervisors: {item.supervisors}
+
+                  <div className="flex items-center gap-3 mb-2">
+                    {item.logo && (
+                      <div
+                        className={`${item.logo.wide ? 'w-32 h-14' : 'w-20 h-20'} rounded-xl bg-white overflow-hidden flex items-center justify-center shrink-0`}
+                        title={item.logo.name}
+                      >
+                        <img
+                          src={item.logo.src}
+                          alt={item.logo.name}
+                          className="w-full h-full object-contain p-1"
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <div className="flex flex-wrap gap-x-2 gap-y-1 font-mono text-xs text-sage/50">
+                        <span>{item.institution}</span>
+                        <span className="text-sage/20">•</span>
+                        <span>{item.location}</span>
+                      </div>
+                      <div className="font-mono text-xs text-sage/30 mt-1">
+                        Supervisors: {item.supervisors}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -611,7 +653,7 @@ export default function CV() {
                           <span className="font-mono text-xs text-acid shrink-0">{project.period}</span>
                         </div>
                         
-                        <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-xs text-sage/50 mb-2">
+                        <div className="flex flex-wrap gap-x-2 gap-y-2 font-mono text-xs text-sage/50 mb-2">
                           <span>Client: {project.client}</span>
                           <span className="text-sage/20">•</span>
                           <span>{project.location}</span>
@@ -690,7 +732,7 @@ export default function CV() {
                   </span>
                 </div>
                 
-                <div className="flex flex-col md:flex-row gap-x-6 gap-y-1 text-sm text-sage/60 font-mono mb-2">
+                <div className="flex flex-col md:flex-row gap-x-2 gap-y-1 text-sm text-sage/60 font-mono mb-2">
                   <span>{item.institution}</span>
                   <span className="hidden md:inline text-sage/20">•</span>
                   <span>{item.location}</span>
