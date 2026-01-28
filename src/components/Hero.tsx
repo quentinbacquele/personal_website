@@ -5,7 +5,7 @@ import RainforestSpectrogram from './RainforestSpectrogram';
 export default function Hero() {
   return (
     <section className="min-h-screen flex flex-col justify-center px-6 md:px-12 relative pt-20">
-      <div className="max-w-7xl mx-auto w-full flex flex-col lg:flex-row items-center lg:items-start gap-12 mt-16 md:mt-24">
+      <div className="max-w-7xl mx-auto w-full flex flex-col lg:flex-row items-center lg:items-start gap-0 md:gap-12 mt-16 md:mt-24">
         <div className="flex-1 w-full">
           <motion.div
             initial={{ opacity: 0 }}
@@ -21,7 +21,7 @@ export default function Hero() {
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-              className="font-serif text-6xl md:text-8xl lg:text-9xl text-sand leading-[0.9] mb-2"
+              className="font-serif text-8xl lg:text-9xl text-sand leading-[0.9] mb-2"
             >
               Quentin
             </motion.h1>
@@ -32,7 +32,7 @@ export default function Hero() {
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="font-serif text-6xl md:text-8xl lg:text-9xl text-acid italic leading-[0.9]"
+              className="font-serif text-8xl lg:text-9xl text-acid italic leading-[0.9]"
             >
               Bacquelé
             </motion.h1>
@@ -44,7 +44,7 @@ export default function Hero() {
           initial={{ opacity: 0, x: 40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 1.2, delay: 0.4 }}
-          className="flex-1 w-full flex justify-center lg:justify-end lg:mr-32 mt-12 lg:-mt-52 scale-[1.6] origin-center lg:origin-right"
+          className="flex-1 w-full flex justify-center lg:justify-end lg:mr-32 -mt-32 md:mt-0 lg:-mt-52 md:scale-[1.3] lg:scale-[1.6] origin-center lg:origin-right"
         >
           <RainforestSpectrogram />
         </motion.div>

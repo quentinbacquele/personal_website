@@ -733,11 +733,11 @@ export default function RainforestSpectrogram() {
   }, [updateAxisLabels, updateSpectrogram]);
 
   return (
-    <div className="w-full mx-auto">
-      <div ref={containerRef} className="relative h-[850px] w-full overflow-visible">
+    <div className="w-full mx-auto max-w-[100vw] md:max-w-none overflow-hidden md:overflow-visible">
+      <div ref={containerRef} className="relative h-[650px] lg:h-[850px] w-full overflow-visible">
         <button
           onClick={toggleMute}
-          className="absolute top-52 left-1/2 -translate-x-1/2 z-10 p-2 text-sand/50 hover:text-sand transition-colors duration-300 mix-blend-difference"
+          className="absolute top-36 md:top-52 left-1/2 -translate-x-1/2 z-10 p-2 text-sand/50 hover:text-sand transition-colors duration-300 mix-blend-difference"
           aria-label={isMuted ? "Unmute" : "Mute"}
         >
           {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
