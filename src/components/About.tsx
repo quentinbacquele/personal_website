@@ -68,10 +68,9 @@ export default function About() {
           >
             <Link
               to="/cv"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-acid/10 border border-acid text-acid font-mono text-sm uppercase tracking-widest hover:bg-acid hover:text-obsidian transition-all duration-300"
+              className="inline-flex items-center justify-center px-8 py-4 bg-acid border border-acid text-obsidian font-mono text-sm font-bold uppercase tracking-widest"
             >
               View Full CV
-              <span className="text-lg leading-none">→</span>
             </Link>
           </motion.div>
         </div>

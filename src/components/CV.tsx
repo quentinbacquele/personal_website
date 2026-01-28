@@ -383,7 +383,7 @@ export default function CV() {
                 </span>
               </div>
               
-              <div className="flex items-center gap-4 mb-4">
+              <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
                 <div className="flex items-center gap-3 shrink-0">
                   {currentPosition.logos.map((logo) => (
                     <div
@@ -496,7 +496,7 @@ export default function CV() {
                     <span className="font-mono text-xs text-acid shrink-0">{item.period}</span>
                   </div>
 
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
                     {item.logo && (
                       <div
                         className={`${item.logo.wide ? 'w-32 h-14' : 'w-20 h-20'} rounded-xl bg-white overflow-hidden flex items-center justify-center shrink-0`}
