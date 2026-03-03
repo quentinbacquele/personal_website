@@ -198,6 +198,12 @@ const fundings = [
 
 const teaching = [
   {
+    course: 'Analyzing Human and Animal Sounds',
+    period: '2026 (3h)',
+    level: 'AI PSL Week',
+    institution: 'ENS ULM',
+  },
+  {
     course: 'Sound Resynthesis',
     period: '2025 (4h)',
     level: 'M.Sc. Bioacoustics',
