@@ -16,10 +16,12 @@ export default function About() {
             className="aspect-[4/5] bg-obsidian/80 border border-sage/20 relative overflow-hidden p-8 flex items-end group"
           >
              {/* Profile Image */}
-             <img 
-               src="/images/IMG_3144_jpg.JPG" 
-               alt="Quentin Bacquelé"
-               className="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-700"
+             <img
+               src="/images/first_author2.jpg"
+               alt="Quentin Bacquelé recording birdsong in the field with a parabolic microphone"
+               loading="lazy"
+               decoding="async"
+               className="absolute inset-0 w-full h-full object-cover object-[center_25%] opacity-90 transition-transform duration-700"
              />
              
              {/* Gradient Overlay for Text Readability */}

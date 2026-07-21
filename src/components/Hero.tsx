@@ -21,7 +21,7 @@ export default function Hero() {
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-              className="font-serif text-8xl lg:text-9xl text-sand leading-[0.9] mb-2"
+              className="font-serif text-6xl sm:text-7xl md:text-8xl lg:text-9xl text-sand leading-[0.9] mb-2"
             >
               Quentin
             </motion.h1>
@@ -32,7 +32,7 @@ export default function Hero() {
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="font-serif text-8xl lg:text-9xl text-acid italic leading-[0.9]"
+              className="font-serif text-6xl sm:text-7xl md:text-8xl lg:text-9xl text-acid italic leading-[0.9]"
             >
               Bacquelé
             </motion.h1>

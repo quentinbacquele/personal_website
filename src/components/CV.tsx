@@ -425,39 +425,48 @@ export default function CV() {
           {/* Publications */}
           <SectionHeading id="publications">Publications</SectionHeading>
           <div className="space-y-8">
-            {publications.map((pub, index) => (
-              <motion.a
-                key={index}
-                href={pub.link}
-                target={pub.link !== '#' ? "_blank" : undefined}
-                rel={pub.link !== '#' ? "noopener noreferrer" : undefined}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="block group border-l-2 border-sage/10 pl-6 hover:border-acid transition-colors"
-              >
-                <div className="flex flex-col md:flex-row md:justify-between md:items-baseline gap-2 mb-2">
-                  <h3 className="font-sans text-xl text-sand font-medium leading-snug group-hover:text-acid transition-colors">
-                    {pub.title}
-                  </h3>
-                  <span className="font-mono text-xs text-acid shrink-0">
-                    {pub.year}
-                  </span>
-                </div>
-                
-                <div className="text-sage/60 text-sm mb-2 font-sans">{pub.authors}</div>
+            {publications.map((pub, index) => {
+              const isLinked = Boolean(pub.link) && pub.link !== '#';
+              const Wrapper = isLinked ? motion.a : motion.div;
 
-                <div className="flex flex-wrap gap-x-4 gap-y-1 items-center font-mono text-xs text-sage/60">
-                  <span className="text-surf">{pub.journal}</span>
-                  {pub.tags.map(tag => (
-                    <span key={tag} className="px-2 py-0.5 border border-sage/20 rounded-full text-sage/40">
-                      {tag}
+              return (
+                <Wrapper
+                  key={index}
+                  {...(isLinked
+                    ? { href: pub.link, target: '_blank', rel: 'noopener noreferrer' }
+                    : {})}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className={`block group border-l-2 border-sage/10 pl-6 transition-colors ${
+                    isLinked ? 'hover:border-acid' : ''
+                  }`}
+                >
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-baseline gap-2 mb-2">
+                    <h3 className={`font-sans text-xl text-sand font-medium leading-snug transition-colors ${
+                      isLinked ? 'group-hover:text-acid' : ''
+                    }`}>
+                      {pub.title}
+                    </h3>
+                    <span className="font-mono text-xs text-acid shrink-0">
+                      {pub.year}
                     </span>
-                  ))}
-                </div>
-              </motion.a>
-            ))}
+                  </div>
+
+                  <div className="text-sage/60 text-sm mb-2 font-sans">{pub.authors}</div>
+
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 items-center font-mono text-xs text-sage/60">
+                    <span className="text-surf">{pub.journal}</span>
+                    {pub.tags.map(tag => (
+                      <span key={tag} className="px-2 py-0.5 border border-sage/20 rounded-full text-sage/40">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </Wrapper>
+              );
+            })}
           </div>
 
           {/* Presentations */}

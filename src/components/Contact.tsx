@@ -21,12 +21,30 @@ export default function Contact() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="font-serif text-5xl md:text-7xl text-sage mb-12"
+          className="font-serif text-5xl md:text-7xl text-sage mb-8"
         >
           Get in Touch
         </motion.h2>
 
-        <div className="flex justify-center gap-8 mb-16">
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.1 }}
+          className="font-sans text-sage/70 text-base md:text-lg leading-relaxed max-w-2xl mx-auto mb-12"
+        >
+          Open to research collaborations and graduate opportunities. For press &amp; media
+          inquiries, reach me directly at{' '}
+          <a
+            href="mailto:qbacquele@gmail.com"
+            className="text-acid hover:text-terracotta transition-colors break-words"
+          >
+            qbacquele@gmail.com
+          </a>
+          .
+        </motion.p>
+
+        <div className="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8 mb-16">
           {[
             { icon: Mail, href: "mailto:qbacquele@gmail.com" },
             { icon: Github, href: "https://github.com/quentinbacquele" },

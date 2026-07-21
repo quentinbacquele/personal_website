@@ -3,38 +3,6 @@ import { ArrowLeft, ArrowRight, Clock, Calendar } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { posts } from './Blog';
 
-// Sample content for the template post
-const sampleContent = {
-  'sound-of-the-canopy': {
-    content: `
-      <p class="lead">The Amazon rainforest speaks in frequencies we're only beginning to understand. During my recent expedition to the Madre de Dios region in Peru, I spent three weeks positioning recording equipment at various heights throughout the forest canopy, from the undergrowth to the emergent layer 50 meters above ground.</p>
-
-      <h2>Vertical Stratification of Sound</h2>
-      <p>What emerged from hundreds of hours of recordings was a revelation: the rainforest isn't a cacophony—it's a symphony organized by height. Each layer of the forest has evolved its own acoustic signature, a phenomenon ecologists call "acoustic niche partitioning."</p>
-
-      <p>At ground level, the low-frequency rumbles of ground-dwelling birds like the Tinamou dominate. Their calls, ranging from 300-800 Hz, carry effectively through the dense undergrowth where higher frequencies would be rapidly absorbed.</p>
-
-      <blockquote>
-        <p>"The forest doesn't just stratify light—it stratifies sound. Each elevation is its own broadcast channel."</p>
-      </blockquote>
-
-      <h2>Frequency Modulation and Height</h2>
-      <p>As you ascend through the canopy layers, something remarkable happens: the average frequency of vocalizations increases. Mid-canopy species like antbirds and wrens operate in the 1-4 kHz range, while canopy specialists such as tanagers and cotingas push into the 4-8 kHz territory.</p>
-
-      <p>This isn't coincidence—it's evolution in action. Higher frequencies attenuate less in open air, making them ideal for species that vocalize above the foliage barrier. Meanwhile, lower frequencies penetrate vegetation more effectively, serving the needs of understory species.</p>
-
-      <h2>Implications for Monitoring</h2>
-      <p>Understanding this vertical acoustic structure has profound implications for passive acoustic monitoring. Traditional single-height deployments may be missing entire communities. Our data suggests that comprehensive biodiversity assessment requires a multi-height approach.</p>
-
-      <p>The next phase of this research will deploy a vertical array of autonomous recording units, creating a 3D acoustic map of the forest. Early results suggest we may discover species interactions that have never been documented—conversations happening in frequency bands and at heights we've simply never listened to before.</p>
-    `,
-    references: [
-      'Sueur, J., & Farina, A. (2015). Ecoacoustics: the ecological investigation and interpretation of environmental sound.',
-      'Pieretti, N., Farina, A., & Morri, D. (2011). A new methodology to infer the singing activity of an avian community.'
-    ]
-  }
-};
-
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const post = posts.find(p => p.slug === slug);
@@ -42,7 +10,7 @@ export default function BlogPost() {
   // Find prev/next posts for navigation
   const currentIndex = posts.findIndex(p => p.slug === slug);
   const prevPost = currentIndex > 0 ? posts[currentIndex - 1] : null;
-  const nextPost = currentIndex < posts.length - 1 ? posts[currentIndex + 1] : null;
+  const nextPost = currentIndex >= 0 && currentIndex < posts.length - 1 ? posts[currentIndex + 1] : null;
 
   if (!post) {
     return (
@@ -56,8 +24,6 @@ export default function BlogPost() {
       </div>
     );
   }
-
-  const content = sampleContent[slug as keyof typeof sampleContent] || sampleContent['sound-of-the-canopy'];
 
   return (
     <article className="min-h-screen bg-gradient-to-b from-obsidian via-charcoal/80 to-obsidian text-sand">
@@ -173,15 +139,15 @@ export default function BlogPost() {
               prose-code:text-acid prose-code:bg-charcoal/50 prose-code:px-2 prose-code:py-0.5 prose-code:rounded prose-code:font-mono prose-code:text-sm
               [&_.lead]:font-serif [&_.lead]:text-xl [&_.lead]:md:text-2xl [&_.lead]:text-sage [&_.lead]:leading-relaxed [&_.lead]:mb-12
             "
-            dangerouslySetInnerHTML={{ __html: content.content }}
+            dangerouslySetInnerHTML={{ __html: post.content ?? '' }}
           />
 
           {/* References Section */}
-          {content.references && (
+          {post.references && post.references.length > 0 && (
             <div className="mt-20 pt-12 border-t border-sage/15">
               <h3 className="font-mono text-xs text-acid tracking-widest uppercase mb-6">References</h3>
               <ul className="space-y-3">
-                {content.references.map((ref, i) => (
+                {post.references.map((ref, i) => (
                   <li key={i} className="font-sans text-sm text-sage/60 leading-relaxed pl-4 border-l border-sage/20">
                     {ref}
                   </li>

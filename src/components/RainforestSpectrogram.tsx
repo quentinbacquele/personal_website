@@ -556,7 +556,9 @@ export default function RainforestSpectrogram() {
       alpha: true,
       canvas,
     });
-    renderer.setPixelRatio(window.devicePixelRatio || 1);
+    // Cap pixel ratio: on retina/mobile devicePixelRatio can be 3, which quadruples
+    // fragment-shader work for no visible benefit on this scene. Cap at 2.
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setClearColor(0x000000, 0);
 
     const scene = new THREE.Scene();
@@ -692,30 +694,88 @@ export default function RainforestSpectrogram() {
     resizeObserver.observe(container);
     resizeObserverRef.current = resizeObserver;
 
-    const renderScene = () => {
-      animationRef.current = requestAnimationFrame(renderScene);
-      if (analyserRef.current && dataArrayRef.current) {
-        // If suspended, updateSpectrogram handles simulation
-        // If running, we fetch data here or in updateSpectrogram
-        // Let's centralize it in updateSpectrogram
-        updateSpectrogram();
-      }
-      if (rendererStateRef.current.renderer && rendererStateRef.current.camera) {
-        renderer.render(scene, camera);
-        rendererStateRef.current.renderer = renderer;
-        rendererStateRef.current.camera = camera;
-      } else {
-        renderer.render(scene, camera);
-      }
+    const prefersReducedMotion =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Throttle the (expensive) spectrogram recompute to ~30Hz; rendering the
+    // already-built scene each frame is cheap by comparison.
+    const UPDATE_INTERVAL_MS = 1000 / 30;
+    let lastUpdate = 0;
+    let frozen = false; // reduced-motion: stop once the plane has filled
+    let reducedFillCount = 0;
+
+    const drawFrame = () => {
+      renderer.render(scene, camera);
       updateAxisLabels();
     };
 
-    renderScene();
+    const renderScene = (now: number) => {
+      // Reduced motion: fill the history once, then hold a static frame.
+      if (prefersReducedMotion) {
+        if (audioBufferRef.current && reducedFillCount < HISTORY_LENGTH) {
+          updateSpectrogram();
+          reducedFillCount += 1;
+        } else if (audioBufferRef.current) {
+          frozen = true;
+          drawFrame();
+          animationRef.current = undefined;
+          return; // do not schedule further frames
+        }
+        drawFrame();
+        animationRef.current = requestAnimationFrame(renderScene);
+        return;
+      }
+
+      if (analyserRef.current && dataArrayRef.current && now - lastUpdate >= UPDATE_INTERVAL_MS) {
+        lastUpdate = now;
+        updateSpectrogram();
+      }
+      drawFrame();
+      animationRef.current = requestAnimationFrame(renderScene);
+    };
+
+    const startLoop = () => {
+      if (frozen || animationRef.current !== undefined) return;
+      lastUpdate = 0;
+      animationRef.current = requestAnimationFrame(renderScene);
+    };
+
+    const stopLoop = () => {
+      if (animationRef.current !== undefined) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = undefined;
+      }
+    };
+
+    // Only animate while the hero is on screen and the tab is visible.
+    let inView = true;
+    const evaluateRunning = () => {
+      if (inView && document.visibilityState !== 'hidden') startLoop();
+      else stopLoop();
+    };
+
+    const visibilityHandler = () => evaluateRunning();
+    document.addEventListener('visibilitychange', visibilityHandler);
+
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        inView = entries[0]?.isIntersecting ?? true;
+        evaluateRunning();
+      },
+      { threshold: 0 }
+    );
+    intersectionObserver.observe(container);
+
+    startLoop();
 
     return () => {
-      if (animationRef.current) {
+      if (animationRef.current !== undefined) {
         cancelAnimationFrame(animationRef.current);
+        animationRef.current = undefined;
       }
+      document.removeEventListener('visibilitychange', visibilityHandler);
+      intersectionObserver.disconnect();
 
       resizeObserver.disconnect();
 
