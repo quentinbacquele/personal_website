@@ -698,10 +698,6 @@ export default function RainforestSpectrogram() {
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Throttle the (expensive) spectrogram recompute to ~30Hz; rendering the
-    // already-built scene each frame is cheap by comparison.
-    const UPDATE_INTERVAL_MS = 1000 / 30;
-    let lastUpdate = 0;
     let frozen = false; // reduced-motion: stop once the plane has filled
     let reducedFillCount = 0;
 
@@ -710,7 +706,7 @@ export default function RainforestSpectrogram() {
       updateAxisLabels();
     };
 
-    const renderScene = (now: number) => {
+    const renderScene = () => {
       // Reduced motion: fill the history once, then hold a static frame.
       if (prefersReducedMotion) {
         if (audioBufferRef.current && reducedFillCount < HISTORY_LENGTH) {
@@ -727,8 +723,9 @@ export default function RainforestSpectrogram() {
         return;
       }
 
-      if (analyserRef.current && dataArrayRef.current && now - lastUpdate >= UPDATE_INTERVAL_MS) {
-        lastUpdate = now;
+      // Recompute every frame so the scrolling spectrogram stays locked to the
+      // audio's playback rate (throttling here desynced and slowed the scroll).
+      if (analyserRef.current && dataArrayRef.current) {
         updateSpectrogram();
       }
       drawFrame();
@@ -737,7 +734,6 @@ export default function RainforestSpectrogram() {
 
     const startLoop = () => {
       if (frozen || animationRef.current !== undefined) return;
-      lastUpdate = 0;
       animationRef.current = requestAnimationFrame(renderScene);
     };
 

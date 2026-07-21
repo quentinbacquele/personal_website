@@ -3,6 +3,14 @@ import { ArrowUpRight } from 'lucide-react';
 
 const publications = [
   {
+    year: 'Soon',
+    title: 'The global biogeography of passerine songs',
+    authors: 'Quentin Bacquelé, Jean-Yves Barnagaud, Cyrille Violle, Frédéric Theunissen, Nicolas Mathevon',
+    journal: 'Forthcoming',
+    tags: ['Birdsong Evolution', 'Acoustic Motifs'],
+    link: '#'
+  },
+  {
     year: '2025',
     title: 'HAC-Net: Learning Natural Units from Acoustic Change',
     authors: 'Quentin Bacquelé, Jean-Yves Barnagaud, Frederic Theunissen, Nicolas Mathevon',
@@ -16,14 +24,6 @@ const publications = [
     authors: 'Quentin Bacquelé, Barbara Freitas, Borja Milá, Christophe Thébaud, Nicolas Mathevon, Frédéric Theunissen',
     journal: 'In Preparation',
     tags: ['Frequency Contour', 'Dialects'],
-    link: '#'
-  },
-  {
-    year: 'N/A',
-    title: 'The global biogeography of passerine songs',
-    authors: 'Quentin Bacquelé, Jean-Yves Barnagaud, Cyrille Violle, Frédéric Theunissen, Nicolas Mathevon',
-    journal: 'In Preparation',
-    tags: ['Birdsong Evolution', 'Acoustic Motifs'],
     link: '#'
   }
 ];

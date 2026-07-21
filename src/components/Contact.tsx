@@ -33,8 +33,7 @@ export default function Contact() {
           transition={{ delay: 0.1 }}
           className="font-sans text-sage/70 text-base md:text-lg leading-relaxed max-w-2xl mx-auto mb-12"
         >
-          Open to research collaborations and graduate opportunities. For press &amp; media
-          inquiries, reach me directly at{' '}
+          For press &amp; media inquiries, reach me directly at{' '}
           <a
             href="mailto:qbacquele@gmail.com"
             className="text-acid hover:text-terracotta transition-colors break-words"
