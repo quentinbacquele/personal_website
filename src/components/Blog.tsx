@@ -63,13 +63,9 @@ export default function Blog() {
             <span className="inline-block font-mono text-[10px] text-obsidian bg-sage/40 px-3 py-1 uppercase tracking-wider mb-6">
               Coming Soon
             </span>
-            <h3 className="font-serif text-2xl md:text-3xl text-sand mb-3">
+            <h3 className="font-serif text-2xl md:text-3xl text-sand">
               The first note is on its way
             </h3>
-            <p className="font-sans text-sage/60 text-base leading-relaxed max-w-xl mx-auto">
-              Plain-language write-ups of the research, technical deep-dives, and field notes will
-              appear here. First up: the story behind the work.
-            </p>
           </motion.div>
         ) : (
           <>
