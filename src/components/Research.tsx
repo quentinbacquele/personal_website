@@ -3,12 +3,12 @@ import { ArrowUpRight } from 'lucide-react';
 
 const publications = [
   {
-    year: 'Soon',
+    year: '2026',
     title: 'The global biogeography of passerine songs',
     authors: 'Quentin Bacquelé, Jean-Yves Barnagaud, Cyrille Violle, Frédéric Theunissen, Nicolas Mathevon',
-    journal: 'Forthcoming',
+    journal: 'Science',
     tags: ['Birdsong Evolution', 'Acoustic Motifs'],
-    link: '#'
+    link: 'https://www.science.org/doi/10.1126/science.aee6239'
   },
   {
     year: '2025',
