@@ -66,6 +66,14 @@ const education = [
 
 const publications = [
   {
+    year: '2026',
+    title: 'The global biogeography of passerine songs',
+    authors: 'Quentin Bacquelé, Jean-Yves Barnagaud, Cyrille Violle, Frédéric Theunissen, Nicolas Mathevon',
+    journal: 'Science',
+    tags: ['Birdsong Evolution', 'Acoustic Motifs'],
+    link: 'https://www.science.org/doi/10.1126/science.aee6239'
+  },
+  {
     year: '2025',
     title: 'HAC-Net: Learning Natural Units from Acoustic Change',
     authors: 'Quentin Bacquelé, Jean-Yves Barnagaud, Frederic Theunissen, Nicolas Mathevon',
@@ -88,14 +96,6 @@ const publications = [
     journal: 'In Preparation',
     tags: ['Frequency Contour', 'Dialects'],
     link: '#'
-  },
-  {
-    year: '2026',
-    title: 'The global biogeography of passerine songs',
-    authors: 'Quentin Bacquelé, Jean-Yves Barnagaud, Cyrille Violle, Frédéric Theunissen, Nicolas Mathevon',
-    journal: 'Science',
-    tags: ['Birdsong Evolution', 'Acoustic Motifs'],
-    link: 'https://www.science.org/doi/10.1126/science.aee6239'
   }
 ];
 
