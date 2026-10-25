@@ -29,7 +29,6 @@ const bbc: PressItem = {
   link: 'https://www.aol.com/articles/scientists-building-blocks-birdsongs-spectacular-235534000.html',
   image: 'https://hermes.media.static.aol.com/media/2026/07/24/acebf132-48bc-34dd-8ebd-370cb8e436d9/52e10272-98a3-4b66-a9b1-a3625f9f7538.jpg',
   imageAlt: 'A wren singing on a tree stump',
-  note: 'By Victoria Gill.',
 };
 
 const npr: PressItem = {
@@ -42,7 +41,6 @@ const npr: PressItem = {
   imageAlt: 'Short Wave podcast artwork',
   imageFit: 'contain',
   logo: '/press/npr.svg',
-  note: 'Short Wave’s Hannah Chinn and Nate Rott on the building blocks of birdsong.',
 };
 
 const leMonde: PressItem = {
@@ -55,7 +53,6 @@ const leMonde: PressItem = {
   imageAlt: 'A wren on a grassy bank',
   logo: '/press/le-monde.svg',
   language: 'fr',
-  note: 'By Nathaniel Herzberg.',
 };
 
 const audubon: PressItem = {
@@ -89,7 +86,6 @@ const franceCulture: PressItem = {
   imageAlt: 'A Green Oropendola perched between two tree trunks',
   logo: '/press/france-culture.svg',
   language: 'fr',
-  note: 'With Bérengère Bonte.',
 };
 
 const physOrg: PressItem = {
@@ -121,7 +117,6 @@ export const interviews: PressItem[] = [
     imageAlt: 'Forschung aktuell programme artwork: sea ice seen from above',
     logo: '/press/deutschlandfunk.svg',
     language: 'de',
-    note: 'By Volkart Wildermuth.',
   },
   nos,
   {
@@ -144,7 +139,6 @@ export const interviews: PressItem[] = [
     imageAlt: 'A European Robin perched on a branch',
     logo: '/press/le-figaro.svg',
     language: 'fr',
-    note: 'By Cyrille Vanlerberghe.',
   },
   {
     outlet: 'Libération',
@@ -157,7 +151,6 @@ export const interviews: PressItem[] = [
     imageAlt: 'A warbler singing on a twig among leaves',
     logo: '/press/liberation.svg',
     language: 'fr',
-    note: 'By Rémi Ducasse.',
     also: [{ label: 'print', href: 'https://www.pressreader.com/france/liberation/20260728/281715506405624' }],
   },
   {
@@ -170,7 +163,6 @@ export const interviews: PressItem[] = [
     imageAlt: 'A European Robin singing on a bare branch',
     logo: '/press/ouest-france.svg',
     language: 'fr',
-    note: 'By Nicolas Blandin.',
   },
   {
     outlet: 'Québec Science',
@@ -191,7 +183,6 @@ export const interviews: PressItem[] = [
     image: 'https://th-i.thgim.com/public/sci-tech/science/oerug5/article71414466.ece/alternates/LANDSCAPE_1200/Red-whiskered_bulbul_%E0%A6%B8%E0%A6%BF%E0%A6%AA%E0%A6%BE%E0%A6%B9%E0%A6%BF_%E0%A6%AC%E0%A7%81%E0%A6%B2%E0%A6%AC%E0%A7%81%E0%A6%B2%E0%A6%BF.jpg',
     imageAlt: 'A Red-whiskered Bulbul perched on a flowering branch',
     logo: '/press/the-hindu.svg',
-    note: 'By Nikhil Sreekandan.',
     also: [{ label: 'print', href: 'https://www.pressreader.com/india/the-hindu-international-9bn2/20260902/281964614585469' }],
   },
 ];
@@ -207,7 +198,6 @@ export const commentary: PressItem[] = [
     imageAlt: 'Cover of the Science issue 6809, volume 393',
     imageFit: 'contain',
     logo: '/press/science.svg',
-    note: 'By Elodie Briefer, in the same issue.',
   },
   physOrg,
   {
