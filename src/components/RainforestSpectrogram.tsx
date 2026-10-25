@@ -7,8 +7,14 @@ const HISTORY_LENGTH = 256;
 const TIME_SPAN = 80;
 const FREQ_SPAN = 80;
 const ROW_BYTE_SIZE = FREQUENCY_BINS * 4;
-const FRUSTUM_SIZE = 200;
-const AXIS_COLOR = 0xf6eddd;
+// Room kept around the plot, in CSS pixels, so the axis labels never touch the box edge.
+const FIT_MARGIN_PX = 22;
+// Share of its box the plot fills, so it sits a touch smaller than the space allows.
+const PLOT_FILL = 0.9;
+const AXIS_COLOR = 0x2a2d2a; // ink, for axes drawn on the paper page
+// Same stops as the fragment shader, so the legend reads the surface correctly.
+const COLORMAP_CSS =
+  'linear-gradient(90deg, #0f3338 0%, #1a5c6b 12%, #1f7a8c 24%, #2ea6b8 36%, #40b399 48%, #6bbf7a 56%, #b3d161 64%, #fa992e 74%, #b82e1f 100%)';
 
 // Analyser configuration to ensure consistency between simulated and live modes
 const MIN_DECIBELS = -90;
@@ -71,9 +77,9 @@ const fragmentShader = `
     // vec3(0.10, 0.65, 0.88), vec3(0.20, 0.85, 0.55), vec3(0.50, 0.95, 0.30),
     // vec3(0.95, 0.90, 0.25), vec3(1.00, 0.60, 0.10), vec3(0.90, 0.20, 0.10)
 
-    vec3 stop0 = vec3(0.02, 0.05, 0.15);  // deep warm navy - lowest low freq
-    vec3 stop1 = vec3(0.08, 0.22, 0.32);  // dark teal
-    vec3 stop2 = vec3(0.12, 0.48, 0.55);  // bright teal (more blue)
+    vec3 stop0 = vec3(0.06, 0.20, 0.22);  // quietest: deep blue-green, so silence stays visible on the paper page
+    vec3 stop1 = vec3(0.10, 0.36, 0.42);  // quiet: dark teal
+    vec3 stop2 = vec3(0.12, 0.48, 0.55);  // bright teal
     vec3 stop3 = vec3(0.18, 0.65, 0.72);  // vivid cyan (extended blue)
     vec3 stop4 = vec3(0.25, 0.70, 0.60);  // cyan-green (still blue-ish)
     vec3 stop5 = vec3(0.42, 0.75, 0.48);  // cool green
@@ -129,7 +135,17 @@ const fragmentShader = `
   }
 `;
 
-export default function RainforestSpectrogram() {
+type RainforestSpectrogramProps = {
+  // The plot box and the key (sound control and colour scale) are returned side by side,
+  // so the page can place each one in its own grid cell.
+  plotClassName?: string;
+  keyClassName?: string;
+};
+
+export default function RainforestSpectrogram({
+  plotClassName = '',
+  keyClassName = '',
+}: RainforestSpectrogramProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -411,7 +427,7 @@ export default function RainforestSpectrogram() {
     analyserRef.current = analyser;
 
     const gainNode = ctx.createGain();
-    gainNode.gain.value = 0; // Start muted in the Web Audio graph
+    gainNode.gain.value = 0; // Muted until the visitor presses the sound button
     gainNodeRef.current = gainNode;
 
     analyser.connect(gainNode);
@@ -564,17 +580,11 @@ export default function RainforestSpectrogram() {
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x020409, 0.002);
 
-    const aspect = container.clientWidth / container.clientHeight || 1;
-    const camera = new THREE.OrthographicCamera(
-      (-FRUSTUM_SIZE * aspect) / 2,
-      (FRUSTUM_SIZE * aspect) / 2,
-      FRUSTUM_SIZE / 2,
-      -FRUSTUM_SIZE / 2,
-      0.1,
-      500
-    );
+    // The frustum is set by resize(), which fits it to the plot.
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 500);
     camera.position.set(115, 95, 115);
     camera.lookAt(40, 0, 40);
+    camera.updateMatrixWorld();
 
     const ambient = new THREE.AmbientLight(0xffffff, 0.55);
     const keyLight = new THREE.DirectionalLight(0xffffff, 0.85);
@@ -638,29 +648,36 @@ export default function RainforestSpectrogram() {
       axisGeometries.push(geometry);
     };
 
-    const axisOrigin = new THREE.Vector3(FREQ_SPAN + 10, 8, 0);
-    const axisLen = 60;
+    // Axes sit on the noise floor along the surface's outer edges, like a 3D plot's box,
+    // so the surface can never hide them: time and frequency run along the two front edges
+    // and meet at the near corner; amplitude rises from the right-hand corner.
+    const FLOOR = -12;
+    const EDGE_GAP = 3;
+    const nearCorner = new THREE.Vector3(FREQ_SPAN + EDGE_GAP, FLOOR, TIME_SPAN + EDGE_GAP);
+    const rightCorner = new THREE.Vector3(FREQ_SPAN + EDGE_GAP, FLOOR, 0);
 
     const freqDirection = new THREE.Vector3(-1, 0, 0);
     const ampDirection = new THREE.Vector3(0, 1, 0);
     const timeDirection = new THREE.Vector3(0, 0, 1);
+    const ampLength = 45;
 
-    makeSolidAxis(axisOrigin, freqDirection, axisLen);
-    makeSolidAxis(axisOrigin, ampDirection, axisLen);
-    makeSolidAxis(axisOrigin, timeDirection, axisLen);
+    makeSolidAxis(nearCorner, freqDirection, FREQ_SPAN + EDGE_GAP);
+    makeSolidAxis(rightCorner, timeDirection, TIME_SPAN + EDGE_GAP);
+    makeSolidAxis(rightCorner, ampDirection, ampLength);
 
-    const freqLabelPos = axisOrigin
+    // Labels sit just outside their axis, away from the surface.
+    const freqLabelPos = nearCorner
       .clone()
-      .add(freqDirection.clone().multiplyScalar(axisLen / 2))
-      .add(new THREE.Vector3(0, 6, 0));
-    const ampLabelPos = axisOrigin
+      .add(freqDirection.clone().multiplyScalar((FREQ_SPAN + EDGE_GAP) / 2))
+      .add(new THREE.Vector3(0, -3, 7));
+    const timeLabelPos = rightCorner
       .clone()
-      .add(ampDirection.clone().multiplyScalar(axisLen / 2))
-      .add(new THREE.Vector3(6, 0, 0));
-    const timeLabelPos = axisOrigin
+      .add(timeDirection.clone().multiplyScalar((TIME_SPAN + EDGE_GAP) / 2))
+      .add(new THREE.Vector3(7, -3, 0));
+    const ampLabelPos = rightCorner
       .clone()
-      .add(timeDirection.clone().multiplyScalar(axisLen / 2))
-      .add(new THREE.Vector3(0, -6, 0));
+      .add(ampDirection.clone().multiplyScalar(ampLength / 2))
+      .add(new THREE.Vector3(5, 0, -5));
 
     rendererStateRef.current = {
       renderer,
@@ -673,14 +690,41 @@ export default function RainforestSpectrogram() {
       },
     };
 
+    // The plot's extent as the camera sees it: the box from the noise floor to the tallest peaks
+    // the recording reaches (the theoretical maximum, 33, is never hit and would leave a band of
+    // empty space on top), the axes on its edges and the label anchors just outside them.
+    const peakTop = 14;
+    const plotPoints = [freqLabelPos, timeLabelPos, ampLabelPos];
+    for (const x of [0, FREQ_SPAN + EDGE_GAP]) {
+      for (const y of [FLOOR, peakTop]) {
+        for (const z of [0, TIME_SPAN + EDGE_GAP]) plotPoints.push(new THREE.Vector3(x, y, z));
+      }
+    }
+    const plotBounds = new THREE.Box2();
+    plotPoints.forEach((point) => {
+      const viewPoint = point.clone().applyMatrix4(camera.matrixWorldInverse);
+      plotBounds.expandByPoint(new THREE.Vector2(viewPoint.x, viewPoint.y));
+    });
+
+    // Fit the frustum so the plot fills its box whatever the box's shape. When the box is taller
+    // than the plot needs, the plot sits on the box's floor, right above its key.
     const resize = () => {
       const { clientWidth, clientHeight } = container;
-      const aspectRatio = clientWidth / clientHeight || 1;
+      if (!clientWidth || !clientHeight) return;
       renderer.setSize(clientWidth, clientHeight);
-      camera.left = (-FRUSTUM_SIZE * aspectRatio) / 2;
-      camera.right = (FRUSTUM_SIZE * aspectRatio) / 2;
-      camera.top = FRUSTUM_SIZE / 2;
-      camera.bottom = -FRUSTUM_SIZE / 2;
+      const plotSize = plotBounds.getSize(new THREE.Vector2());
+      const unitsPerPx =
+        Math.max(
+          plotSize.x / Math.max(clientWidth - 2 * FIT_MARGIN_PX, 1),
+          plotSize.y / Math.max(clientHeight - 2 * FIT_MARGIN_PX, 1)
+        ) / PLOT_FILL;
+      const frustumWidth = clientWidth * unitsPerPx;
+      const frustumHeight = clientHeight * unitsPerPx;
+      const center = plotBounds.getCenter(new THREE.Vector2());
+      camera.left = center.x - frustumWidth / 2;
+      camera.right = center.x + frustumWidth / 2;
+      camera.bottom = plotBounds.min.y - FIT_MARGIN_PX * unitsPerPx;
+      camera.top = camera.bottom + frustumHeight;
       camera.updateProjectionMatrix();
     };
 
@@ -759,7 +803,8 @@ export default function RainforestSpectrogram() {
         inView = entries[0]?.isIntersecting ?? true;
         evaluateRunning();
       },
-      { threshold: 0 }
+      // Start a little before it scrolls into view, so it is never an empty slab on arrival.
+      { threshold: 0, rootMargin: '300px 0px' }
     );
     intersectionObserver.observe(container);
 
@@ -789,16 +834,8 @@ export default function RainforestSpectrogram() {
   }, [updateAxisLabels, updateSpectrogram]);
 
   return (
-    <div className="w-full mx-auto max-w-[100vw] md:max-w-none overflow-hidden md:overflow-visible">
-      <div ref={containerRef} className="relative h-[650px] lg:h-[850px] w-full overflow-visible">
-        <button
-          onClick={toggleMute}
-          className="absolute top-36 md:top-52 left-1/2 -translate-x-1/2 z-10 p-2 text-sand/50 hover:text-sand transition-colors duration-300 mix-blend-difference"
-          aria-label={isMuted ? "Unmute" : "Mute"}
-        >
-          {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-        </button>
-
+    <>
+      <div ref={containerRef} className={`relative min-h-0 w-full overflow-visible ${plotClassName}`}>
         <canvas
           ref={canvasRef}
           className="absolute inset-0 h-full w-full pointer-events-none"
@@ -806,24 +843,43 @@ export default function RainforestSpectrogram() {
         <div className="pointer-events-none absolute inset-0">
           <span
             ref={timeLabelRef}
-            className="absolute font-mono text-[10px] uppercase tracking-[0.5em] text-sand/80 opacity-0 select-none"
+            className="absolute text-[13px] text-graphite opacity-0 select-none whitespace-nowrap"
           >
             Time
           </span>
           <span
             ref={freqLabelRef}
-            className="absolute font-mono text-[10px] uppercase tracking-[0.5em] text-sand/80 opacity-0 select-none"
+            className="absolute text-[13px] text-graphite opacity-0 select-none whitespace-nowrap"
           >
             Frequency
           </span>
           <span
             ref={ampLabelRef}
-            className="absolute font-mono text-[10px] uppercase tracking-[0.5em] text-sand/80 opacity-0 select-none"
+            className="absolute text-[13px] text-graphite opacity-0 select-none whitespace-nowrap"
           >
             Amplitude
           </span>
         </div>
       </div>
-    </div>
+
+      {/* The sound control and the colour scale read together as the plot's key. */}
+      <div className={`flex flex-wrap items-center gap-x-7 gap-y-3 ${keyClassName}`}>
+        <button
+          onClick={toggleMute}
+          aria-pressed={!isMuted}
+          className="inline-flex items-center gap-2.5 rounded-full bg-ink px-5 py-2.5 text-[15px] font-semibold text-paper transition-colors hover:bg-ink-soft focus-visible:outline-ink"
+        >
+          {isMuted ? <Volume2 size={16} aria-hidden="true" /> : <VolumeX size={16} aria-hidden="true" />}
+          {isMuted ? 'Play sound' : 'Mute'}
+        </button>
+        <div className="w-32 text-xs text-graphite sm:w-36" aria-hidden="true">
+          <div className="h-1.5" style={{ backgroundImage: COLORMAP_CSS }} />
+          <div className="mt-1.5 flex justify-between">
+            <span>Quiet</span>
+            <span>Loud</span>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }

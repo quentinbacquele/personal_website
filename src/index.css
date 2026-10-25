@@ -1,45 +1,99 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@100..800&display=swap');
-@import url('https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,300,400&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* One pair of page margins, shared by every section. */
+  --gutter: clamp(20px, 3vw, 44px);
+}
+
 @layer base {
   html {
-    @apply bg-gradient-to-b from-obsidian via-charcoal to-obsidian text-sand antialiased selection:bg-acid selection:text-obsidian;
+    @apply bg-paper text-ink antialiased;
     scroll-behavior: smooth;
-    overscroll-behavior-y: none;
-  }
-  
-  body {
-    @apply relative overflow-x-hidden;
+    scroll-padding-top: 5rem;
+    font-feature-settings: 'kern', 'liga';
+    -webkit-text-size-adjust: 100%;
   }
 
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
+  body {
+    @apply relative overflow-x-hidden font-sans text-[1.0625rem] leading-[1.58];
   }
-  
-  ::-webkit-scrollbar-track {
-    @apply bg-obsidian;
+
+  ::selection {
+    @apply bg-ink text-paper;
   }
-  
-  ::-webkit-scrollbar-thumb {
-    @apply bg-subtle rounded-full hover:bg-subtle/80 transition-colors;
+
+  a:focus-visible,
+  button:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
   }
 }
 
 @layer utilities {
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  /* Archivo's width axis: the condensed cut carries names and headings. */
+  .condensed {
+    font-stretch: 62%;
   }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+
+  .semi-condensed {
+    font-stretch: 88%;
   }
 }
 
-.glass-panel {
-  @apply bg-charcoal/60 backdrop-blur-md border border-sage/20;
+@layer components {
+  .wrap {
+    width: 100%;
+    max-width: calc(theme('maxWidth.site') + 2 * var(--gutter));
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  .h-section {
+    @apply condensed font-semibold;
+    font-size: clamp(2.75rem, 4.8vw, 4.5rem);
+    line-height: 0.9;
+    letter-spacing: -0.015em;
+  }
+
+  .h-record {
+    @apply condensed font-semibold;
+    font-size: clamp(2.125rem, 3.6vw, 3.375rem);
+    line-height: 0.95;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  /* The heavy rule of a sonagram print: it closes titles and opens records. */
+  .rule {
+    @apply border-t-[3px] border-ink;
+  }
+
+  .prose-body {
+    @apply max-w-[64ch] text-[1.0625rem] leading-[1.62];
+  }
+
+  .prose-body > p + p {
+    margin-top: 1em;
+  }
+
+  .meta {
+    @apply text-[0.9375rem] leading-relaxed text-graphite;
+  }
+
+  .link {
+    @apply underline decoration-1 underline-offset-[0.22em] hover:decoration-2;
+  }
+
+  /* White mount for figures that have their own white background. */
+  .plate {
+    @apply block bg-plate p-3 md:p-5;
+  }
 }
