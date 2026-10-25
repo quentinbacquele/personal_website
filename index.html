@@ -21,15 +21,14 @@
     <!-- Archivo, self-hosted and trimmed to the widths and weights the site uses (see src/index.css) -->
     <link rel="preload" href="/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
 
-    <!-- On the home page, start the portrait and the spectrogram's sound now rather than once the app
-         has loaded. The files and media queries must match Profile.tsx and RainforestSpectrogram.tsx. -->
+    <!-- On the home page, start the portrait now rather than once the app has loaded.
+         The files and media queries must match the <picture> in Profile.tsx. -->
     <script>
       if (location.pathname === '/') {
         var tall = '(min-width: 1024px) and (min-height: 1000px)';
         [
           { href: '/images/profile/portrait-wide-web.avif', as: 'image', type: 'image/avif', media: 'not all and ' + tall, fetchPriority: 'high' },
           { href: '/images/profile/portrait-web.avif', as: 'image', type: 'image/avif', media: tall, fetchPriority: 'high' },
-          { href: '/audio/rainforest.mp3', as: 'fetch', crossOrigin: 'anonymous', fetchPriority: 'low' },
         ].forEach(function (attributes) {
           var link = document.createElement('link');
           link.rel = 'preload';

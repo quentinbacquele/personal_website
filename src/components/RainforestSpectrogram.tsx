@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import SpectrogramKey from './SpectrogramKey';
+import { fetchRainforestAudio } from '../lib/rainforestAudio';
 
 const FREQUENCY_BINS = 256;
 const HISTORY_LENGTH = 256;
@@ -463,17 +464,14 @@ export default function RainforestSpectrogram({
     // Initialize data arrays
     dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
 
-    const controller = new AbortController();
     let cancelled = false;
 
     const loadAudioBuffer = async () => {
       try {
-        const response = await fetch('/audio/rainforest.mp3', {
-          signal: controller.signal,
-        });
-        const buffer = await response.arrayBuffer();
+        const bytes = await fetchRainforestAudio();
         if (cancelled) return;
-        const audioBuffer = await ctx.decodeAudioData(buffer);
+        // Decode a copy: decoding takes ownership of its input, and the download is shared.
+        const audioBuffer = await ctx.decodeAudioData(bytes.slice(0));
         if (cancelled) return;
         audioBufferRef.current = audioBuffer;
 
@@ -481,9 +479,7 @@ export default function RainforestSpectrogram({
           startAudioSource();
         }
       } catch (error) {
-        if ((error as DOMException).name === 'AbortError') {
-          return;
-        }
+        if (cancelled) return;
         console.error('Failed to load rainforest audio', error);
       }
     };
@@ -539,7 +535,6 @@ export default function RainforestSpectrogram({
 
     return () => {
       cancelled = true;
-      controller.abort();
       manageGestureListeners('remove', resumeContext);
       if (audioSourceRef.current) {
         try {

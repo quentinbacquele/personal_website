@@ -1,5 +1,6 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import SpectrogramKey from './SpectrogramKey';
+import { fetchRainforestAudio } from '../lib/rainforestAudio';
 import { publications } from '../data/publications';
 
 // The 3D plot and its three.js code load as a separate file, so the text and the portrait
@@ -40,6 +41,11 @@ const KEY_BOX = 'mt-3 sm:justify-center';
 // share a top edge, the paragraph and the key a bottom edge; the photo takes whatever height is left.
 // Below lg everything stacks in reading order: photo, name, paragraph, plot, key.
 export default function Profile() {
+  // Start the recording now, so the plot has its sound by the time its code arrives.
+  useEffect(() => {
+    fetchRainforestAudio().catch(() => {});
+  }, []);
+
   return (
     <section
       aria-label="Introduction"
