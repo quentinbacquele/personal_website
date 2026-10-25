@@ -10,8 +10,6 @@ const FREQ_SPAN = 80;
 const ROW_BYTE_SIZE = FREQUENCY_BINS * 4;
 // Room kept around the plot, in CSS pixels, so the axis labels never touch the box edge.
 const FIT_MARGIN_PX = 22;
-// Share of its box the plot fills, so it sits a touch smaller than the space allows.
-const PLOT_FILL = 0.9;
 const AXIS_COLOR = 0x2a2d2a; // ink, for axes drawn on the paper page
 
 // Analyser configuration to ensure consistency between simulated and live modes
@@ -713,9 +711,11 @@ export default function RainforestSpectrogram({
     };
 
     // The plot's extent as the camera sees it: the box from the noise floor to the tallest peaks
-    // the recording reaches (the theoretical maximum, 33, is never hit and would leave a band of
-    // empty space on top), the axes on its edges and the label anchors just outside them.
-    const peakTop = 14;
+    // the recording reaches, the axes on its edges and the label anchors just outside them. Replaying
+    // the whole loop offline, the surface's highest point on screen never rises above where a peak of
+    // height 4 at the far corner would sit; anything taller (the theoretical maximum is 33) only
+    // leaves a band of empty space on top.
+    const peakTop = 4;
     const plotPoints = [freqLabelPos, timeLabelPos, ampLabelPos];
     for (const x of [0, FREQ_SPAN + EDGE_GAP]) {
       for (const y of [FLOOR, peakTop]) {
@@ -735,11 +735,10 @@ export default function RainforestSpectrogram({
       if (!clientWidth || !clientHeight) return;
       renderer.setSize(clientWidth, clientHeight);
       const plotSize = plotBounds.getSize(new THREE.Vector2());
-      const unitsPerPx =
-        Math.max(
-          plotSize.x / Math.max(clientWidth - 2 * FIT_MARGIN_PX, 1),
-          plotSize.y / Math.max(clientHeight - 2 * FIT_MARGIN_PX, 1)
-        ) / PLOT_FILL;
+      const unitsPerPx = Math.max(
+        plotSize.x / Math.max(clientWidth - 2 * FIT_MARGIN_PX, 1),
+        plotSize.y / Math.max(clientHeight - 2 * FIT_MARGIN_PX, 1)
+      );
       const frustumWidth = clientWidth * unitsPerPx;
       const frustumHeight = clientHeight * unitsPerPx;
       const center = plotBounds.getCenter(new THREE.Vector2());

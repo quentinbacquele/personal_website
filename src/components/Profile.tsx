@@ -31,14 +31,16 @@ const PinIcon = ({ className }: IconProps) => (
 
 const external = { target: '_blank', rel: 'noopener noreferrer' } as const;
 
-// Shared by the plot and its loading placeholder, so nothing moves when the plot arrives.
-const PLOT_BOX = 'h-[260px] sm:h-[400px] lg:h-auto lg:flex-1';
+// Shared by the plot and its loading placeholder, so nothing moves when the plot arrives. The box takes the
+// plot's own proportions (about 4:3), so the plot fills it exactly; on wide screens it spans 90% of the
+// column, and on short ones it may shrink to fit the column's height.
+const PLOT_BOX = 'aspect-[4/3] sm:max-h-[400px] lg:max-h-none lg:w-[90%] lg:self-center';
 const KEY_BOX = 'mt-3 sm:justify-center';
 
 // The landing fills the first screen (capped on very tall screens) and closes on a hairline rule.
-// Two columns: on the left the portrait, captioned by the name and a short introduction just under it;
-// on the right the sound, as large as its column allows, with its key under it. The photo and the plot
-// share a top edge, the paragraph and the key a bottom edge; the photo takes whatever height is left.
+// Two columns: on the left the portrait, captioned by the name and a short introduction just under it,
+// the photo taking whatever height is left; on the right the sound, as wide as its column, with its key
+// under it, the two centred together in the column's height.
 // Below lg everything stacks in reading order: photo, name, paragraph, plot, key.
 export default function Profile() {
   // Start the recording now, so the plot has its sound by the time its code arrives.
@@ -121,7 +123,9 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="flex flex-col lg:col-span-7 lg:min-h-0">
+        {/* The bottom padding lifts the centred plot and key slightly, to offset the headroom the plot keeps
+            above its peaks, so the pair looks centred rather than measures centred. */}
+        <div className="flex flex-col lg:col-span-7 lg:min-h-0 lg:justify-center lg:pb-10">
           <Suspense
             fallback={
               <>
