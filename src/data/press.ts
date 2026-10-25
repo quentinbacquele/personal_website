@@ -13,8 +13,6 @@ export type PressItem = {
   /** The outlet's logo, shown when there is no share image or it fails to load. */
   logo?: string;
   language?: 'fr' | 'nl' | 'de' | 'es' | 'it' | 'ru';
-  note?: string;
-  also?: { label: string; href: string }[];
 };
 
 // Outlets without a usable share image fall back to their logo, then to their name set in type.
@@ -125,7 +123,7 @@ export const interviews: PressItem[] = [
     kind: 'Public broadcaster, Austria',
     date: 'July 2026',
     link: 'https://science.orf.at/stories/3236637/',
-    image: 'https://ibs.orf.at/science?image=https%3A%2F%2Ftubestatic.orf.at%2Fmims%2F2026%2F30%2F95%2Fcrops%2Fw%3D1200%2Ch%3D627%2Cq%3D75%2F3124124_master_1210595_wren.jpg%3Fs%3Dde5ca4feeec68bd38873ef065828cf011b92bc22',
+    image: 'https://tubestatic.orf.at/mims/2026/30/95/crops/w=1200,h=627,q=75/3124124_master_1210595_wren.jpg?s=de5ca4feeec68bd38873ef065828cf011b92bc22',
     imageAlt: 'A wren singing on a tree stump',
     language: 'de',
   },
@@ -151,7 +149,6 @@ export const interviews: PressItem[] = [
     imageAlt: 'A warbler singing on a twig among leaves',
     logo: '/press/liberation.svg',
     language: 'fr',
-    also: [{ label: 'print', href: 'https://www.pressreader.com/france/liberation/20260728/281715506405624' }],
   },
   {
     outlet: 'Ouest-France',
@@ -183,7 +180,6 @@ export const interviews: PressItem[] = [
     image: 'https://th-i.thgim.com/public/sci-tech/science/oerug5/article71414466.ece/alternates/LANDSCAPE_1200/Red-whiskered_bulbul_%E0%A6%B8%E0%A6%BF%E0%A6%AA%E0%A6%BE%E0%A6%B9%E0%A6%BF_%E0%A6%AC%E0%A7%81%E0%A6%B2%E0%A6%AC%E0%A7%81%E0%A6%B2%E0%A6%BF.jpg',
     imageAlt: 'A Red-whiskered Bulbul perched on a flowering branch',
     logo: '/press/the-hindu.svg',
-    also: [{ label: 'print', href: 'https://www.pressreader.com/india/the-hindu-international-9bn2/20260902/281964614585469' }],
   },
 ];
 

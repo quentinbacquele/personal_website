@@ -1,12 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import type { PressItem } from '../data/press';
 
-const LANGUAGES = { fr: 'French', nl: 'Dutch', de: 'German', es: 'Spanish', it: 'Italian', ru: 'Russian' } as const;
-
-function metaLine(item: PressItem) {
-  return `${item.kind}, ${item.date}${item.language ? `, in ${LANGUAGES[item.language]}` : ''}`;
-}
-
 function Linked({ item, className, children }: { item: PressItem; className: string; children: ReactNode }) {
   if (!item.link) return <div className={className}>{children}</div>;
   return (
@@ -80,23 +74,6 @@ export default function PressCard({ item, size = 'default' }: { item: PressItem;
           {item.title}
         </h3>
       </Linked>
-      {item.note && <p className="meta mt-1.5">{item.note}</p>}
-      <p className="meta mt-1.5">
-        {metaLine(item)}
-        {item.also && (
-          <>
-            {'. Also in '}
-            {item.also.map((version, i) => (
-              <span key={version.href}>
-                {i > 0 && ' and '}
-                <a href={version.href} target="_blank" rel="noopener noreferrer" className="link text-ink">
-                  {version.label}
-                </a>
-              </span>
-            ))}
-          </>
-        )}
-      </p>
     </article>
   );
 }
