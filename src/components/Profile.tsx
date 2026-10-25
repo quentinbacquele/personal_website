@@ -1,5 +1,10 @@
-import RainforestSpectrogram from './RainforestSpectrogram';
+import { lazy, Suspense } from 'react';
+import SpectrogramKey from './SpectrogramKey';
 import { publications } from '../data/publications';
+
+// The 3D plot and its three.js code load as a separate file, so the text and the portrait
+// can show without waiting for them.
+const RainforestSpectrogram = lazy(() => import('./RainforestSpectrogram'));
 
 const [latest] = publications;
 
@@ -25,6 +30,10 @@ const PinIcon = ({ className }: IconProps) => (
 
 const external = { target: '_blank', rel: 'noopener noreferrer' } as const;
 
+// Shared by the plot and its loading placeholder, so nothing moves when the plot arrives.
+const PLOT_BOX = 'h-[260px] sm:h-[400px] lg:h-auto lg:flex-1';
+const KEY_BOX = 'mt-3 sm:justify-center';
+
 // The landing fills the first screen (capped on very tall screens) and closes on a hairline rule.
 // Two columns: on the left the portrait, captioned by the name and a short introduction just under it;
 // on the right the sound, as large as its column allows, with its key under it. The photo and the plot
@@ -39,8 +48,15 @@ export default function Profile() {
       <div className="grid flex-1 grid-cols-1 lg:min-h-0 lg:grid-cols-12 lg:gap-x-10">
         <div className="flex flex-col lg:col-span-5 lg:min-h-0">
           {/* Tall screens give the photo a near-square box: the portrait crop keeps face and microphone together. */}
+          {/* index.html preloads the same AVIF file this picks, so keep the two in step. */}
           <picture className="block lg:min-h-[12rem] lg:flex-1">
+            <source
+              media="(min-width: 1024px) and (min-height: 1000px)"
+              srcSet="/images/profile/portrait-web.avif"
+              type="image/avif"
+            />
             <source media="(min-width: 1024px) and (min-height: 1000px)" srcSet="/images/profile/portrait-web.jpg" />
+            <source srcSet="/images/profile/portrait-wide-web.avif" type="image/avif" />
             <img
               src="/images/profile/portrait-wide-web.jpg"
               alt="Quentin Bacquelé recording birdsong with headphones and a parabolic microphone"
@@ -100,10 +116,16 @@ export default function Profile() {
         </div>
 
         <div className="flex flex-col lg:col-span-7 lg:min-h-0">
-          <RainforestSpectrogram
-            plotClassName="h-[260px] sm:h-[400px] lg:h-auto lg:flex-1"
-            keyClassName="mt-3 sm:justify-center"
-          />
+          <Suspense
+            fallback={
+              <>
+                <div className={`min-h-0 w-full ${PLOT_BOX}`} />
+                <SpectrogramKey isMuted className={KEY_BOX} />
+              </>
+            }
+          >
+            <RainforestSpectrogram plotClassName={PLOT_BOX} keyClassName={KEY_BOX} />
+          </Suspense>
         </div>
       </div>
 

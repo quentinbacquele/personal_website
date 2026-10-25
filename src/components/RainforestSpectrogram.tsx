@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { Volume2, VolumeX } from 'lucide-react';
+import SpectrogramKey from './SpectrogramKey';
 
 const FREQUENCY_BINS = 256;
 const HISTORY_LENGTH = 256;
@@ -12,9 +12,6 @@ const FIT_MARGIN_PX = 22;
 // Share of its box the plot fills, so it sits a touch smaller than the space allows.
 const PLOT_FILL = 0.9;
 const AXIS_COLOR = 0x2a2d2a; // ink, for axes drawn on the paper page
-// Same stops as the fragment shader, so the legend reads the surface correctly.
-const COLORMAP_CSS =
-  'linear-gradient(90deg, #0f3338 0%, #1a5c6b 12%, #1f7a8c 24%, #2ea6b8 36%, #40b399 48%, #6bbf7a 56%, #b3d161 64%, #fa992e 74%, #b82e1f 100%)';
 
 // Analyser configuration to ensure consistency between simulated and live modes
 const MIN_DECIBELS = -90;
@@ -25,6 +22,49 @@ const FREQUENCY_SMOOTH_KERNEL = [0.03, 0.08, 0.15, 0.18, 0.15, 0.08, 0.03];
 const FREQUENCY_SMOOTH_MIX = 0.9;
 const TEMPORAL_SMOOTHING = 0.7;
 
+
+// One frame's spectrum by radix-2 FFT, with the same Hann window and result as a direct DFT
+// but about 400 times cheaper, so it fits easily in every animation frame.
+const FFT_SIZE = 2048;
+const FFT_BITS = 11;
+const HANN = Float32Array.from({ length: FFT_SIZE }, (_, n) => 0.5 * (1 - Math.cos((2 * Math.PI * n) / (FFT_SIZE - 1))));
+const BIT_REVERSED = Uint16Array.from({ length: FFT_SIZE }, (_, i) => {
+  let reversed = 0;
+  for (let b = 0; b < FFT_BITS; b++) reversed = (reversed << 1) | ((i >> b) & 1);
+  return reversed;
+});
+const TWIDDLE_COS = Float64Array.from({ length: FFT_SIZE / 2 }, (_, k) => Math.cos((2 * Math.PI * k) / FFT_SIZE));
+const TWIDDLE_SIN = Float64Array.from({ length: FFT_SIZE / 2 }, (_, k) => Math.sin((2 * Math.PI * k) / FFT_SIZE));
+const fftReal = new Float64Array(FFT_SIZE);
+const fftImag = new Float64Array(FFT_SIZE);
+
+function fftFrame(samples: Float32Array, start: number) {
+  for (let i = 0; i < FFT_SIZE; i++) {
+    fftReal[BIT_REVERSED[i]] = samples[start + i] * HANN[i];
+    fftImag[BIT_REVERSED[i]] = 0;
+  }
+  for (let size = 2; size <= FFT_SIZE; size <<= 1) {
+    const half = size >> 1;
+    const step = FFT_SIZE / size;
+    for (let i = 0; i < FFT_SIZE; i += size) {
+      for (let j = 0; j < half; j++) {
+        const wr = TWIDDLE_COS[j * step];
+        const wi = -TWIDDLE_SIN[j * step];
+        const a = i + j;
+        const b = a + half;
+        const tr = fftReal[b] * wr - fftImag[b] * wi;
+        const ti = fftReal[b] * wi + fftImag[b] * wr;
+        fftReal[b] = fftReal[a] - tr;
+        fftImag[b] = fftImag[a] - ti;
+        fftReal[a] += tr;
+        fftImag[a] += ti;
+      }
+    }
+  }
+}
+
+// One history row per animation frame; used to rebuild the rows the plot would already show.
+const FRAME_SECONDS = 1 / 60;
 
 const vertexShader = `
   precision mediump float;
@@ -186,14 +226,15 @@ export default function RainforestSpectrogram({
 
   const [isMuted, setIsMuted] = useState(true);
 
-  // Helper to compute DFT for visualization when AudioContext is suspended
-  const computeFrequencyData = useCallback((buffer: AudioBuffer, targetArray: Uint8Array) => {
-    const time = performance.now() / 1000;
+  // The spectrum at a given moment of the loop, computed from the decoded audio rather than the
+  // analyser, so the plot moves whether or not sound is playing.
+  const computeFrequencyData = useCallback((buffer: AudioBuffer, targetArray: Uint8Array, time: number) => {
     const duration = buffer.duration;
-    const offset = time % duration;
+    // Wrapped into [0, duration): rebuilding the history right after load asks for moments before zero.
+    const offset = ((time % duration) + duration) % duration;
     const sampleRate = buffer.sampleRate;
     const startIndex = Math.floor(offset * sampleRate);
-    const fftSize = 2048;
+    const fftSize = FFT_SIZE;
     const channelData = buffer.getChannelData(0); // Use first channel
     
     // Initialize smoothed data storage if needed
@@ -218,24 +259,10 @@ export default function RainforestSpectrogram({
       prevData.fill(0, 0, cutoffBin);
     }
 
+    fftFrame(channelData, startIndex);
+
     for (let k = cutoffBin; k < binCount; k++) {
-      let real = 0;
-      let imag = 0;
-      
-      // DFT
-      for (let n = 0; n < fftSize; n++) {
-        const sample = channelData[startIndex + n];
-        // Hann window
-        const window = 0.5 * (1 - Math.cos((2 * Math.PI * n) / (fftSize - 1)));
-        const windowedSample = sample * window;
-        
-        const angle = (2 * Math.PI * k * n) / fftSize;
-        real += windowedSample * Math.cos(angle);
-        imag -= windowedSample * Math.sin(angle);
-      }
-      
-      // Calculate Magnitude
-      const magnitude = Math.sqrt(real * real + imag * imag);
+      const magnitude = Math.sqrt(fftReal[k] * fftReal[k] + fftImag[k] * fftImag[k]);
       
       // Normalize (Analysers typically scale by 1/N)
       // We add a small epsilon to avoid log(0)
@@ -257,7 +284,7 @@ export default function RainforestSpectrogram({
     }
   }, []);
 
-  const updateSpectrogram = useCallback(() => {
+  const updateSpectrogram = useCallback((time: number = performance.now() / 1000) => {
     const dataArray = dataArrayRef.current;
     const texture = spectrogramTextureRef.current;
 
@@ -275,7 +302,7 @@ export default function RainforestSpectrogram({
     // regardless of whether the audio context is running, suspended, or transitioning.
     // This prevents visual glitches ("cuts") when the user interacts.
     if (audioBufferRef.current) {
-      computeFrequencyData(audioBufferRef.current, dataArray);
+      computeFrequencyData(audioBufferRef.current, dataArray, time);
     }
 
     spectrogramData.copyWithin(
@@ -743,7 +770,15 @@ export default function RainforestSpectrogram({
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     let frozen = false; // reduced-motion: stop once the plane has filled
-    let reducedFillCount = 0;
+    let filled = false;
+
+    // As soon as the audio is decoded, build the whole history at once (the last few seconds of the
+    // loop), so the plot appears complete instead of growing in from one edge.
+    const fillHistory = () => {
+      const now = performance.now() / 1000;
+      for (let row = HISTORY_LENGTH - 1; row >= 0; row--) updateSpectrogram(now - row * FRAME_SECONDS);
+      filled = true;
+    };
 
     const drawFrame = () => {
       renderer.render(scene, camera);
@@ -753,15 +788,20 @@ export default function RainforestSpectrogram({
     const renderScene = () => {
       // Reduced motion: fill the history once, then hold a static frame.
       if (prefersReducedMotion) {
-        if (audioBufferRef.current && reducedFillCount < HISTORY_LENGTH) {
-          updateSpectrogram();
-          reducedFillCount += 1;
-        } else if (audioBufferRef.current) {
+        if (audioBufferRef.current) {
+          if (!filled) fillHistory();
           frozen = true;
           drawFrame();
           animationRef.current = undefined;
           return; // do not schedule further frames
         }
+        drawFrame();
+        animationRef.current = requestAnimationFrame(renderScene);
+        return;
+      }
+
+      if (!filled && audioBufferRef.current && dataArrayRef.current) {
+        fillHistory();
         drawFrame();
         animationRef.current = requestAnimationFrame(renderScene);
         return;
@@ -862,24 +902,7 @@ export default function RainforestSpectrogram({
         </div>
       </div>
 
-      {/* The sound control and the colour scale read together as the plot's key. */}
-      <div className={`flex flex-wrap items-center gap-x-7 gap-y-3 ${keyClassName}`}>
-        <button
-          onClick={toggleMute}
-          aria-pressed={!isMuted}
-          className="inline-flex items-center gap-2.5 rounded-full bg-ink px-5 py-2.5 text-[15px] font-semibold text-paper transition-colors hover:bg-ink-soft focus-visible:outline-ink"
-        >
-          {isMuted ? <Volume2 size={16} aria-hidden="true" /> : <VolumeX size={16} aria-hidden="true" />}
-          {isMuted ? 'Play sound' : 'Mute'}
-        </button>
-        <div className="w-32 text-xs text-graphite sm:w-36" aria-hidden="true">
-          <div className="h-1.5" style={{ backgroundImage: COLORMAP_CSS }} />
-          <div className="mt-1.5 flex justify-between">
-            <span>Quiet</span>
-            <span>Loud</span>
-          </div>
-        </div>
-      </div>
+      <SpectrogramKey isMuted={isMuted} onToggle={toggleMute} className={keyClassName} />
     </>
   );
 }
